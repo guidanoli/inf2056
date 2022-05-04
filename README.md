@@ -28,6 +28,8 @@ One can observe from the state machine that for any `j` that satisfies `j ∈ Ri
 * If `j` sent a `GRANT` to `i`, but `j` has not received `RELEASE` back yet, then `j` assumes `i` to be in the CS.
 * If none of the above are true, then `j` assumes `i` NOT to be in the CS.
 
+Note that because `Ii ⊆ Ri`, then `Ri ∩ Ii = Ii`. Thus, the above is true for any `j ∈ Ii`.
+
 ## Credits
 
 ![algo](src/sinalgo/images/appIcon.gif) Sinalgo was developed by the [Distributed Computing Group](http://disco.ethz.ch/) at [ETH Zurich](http://www.ethz.ch/).
