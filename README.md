@@ -7,7 +7,7 @@ Every assignment will consist of implementating some distributed algorithm on Si
 
 ## Distributed Mutual Exclusion Algorithms (Sanders, 1987)
 
-Every process in the generalized algorithm is in one of the following three states:
+Every process `i` in the generalized algorithm is in one of the following three states. We denote the request set of process `i` by `Ri` and the inform set of process of process `i` by `Ii`.
 
 ```mermaid
 %% State machine for processes in Sanders87
@@ -15,12 +15,17 @@ graph TB
     %% States
     NotInCS([Not in the critical section])
     Waiting([Waiting to get in the critical section])
-    InCS([Inside the critical section])
+    InCS([In the critical section])
     %% Transitions
-    NotInCS -- "send(REQUEST, R ∪ I)" --> Waiting
-    Waiting -- "receive(GRANT, R)" --> InCS
-    InCS -- "send(RELEASE, I)" --> NotInCS
+    NotInCS -- "When enter() is called<br/>∀j ∈ Ri, send(REQUEST, j)" --> Waiting
+    Waiting -- "When ∀j ∈ Ri, received(GRANT, j)" --> InCS
+    InCS -- "When exit() is called<br/>∀j ∈ Ii, send(RELEASE, j)" --> NotInCS
 ```
+
+One can observe from the state machine that for any `j` that satisfies `j ∈ Ri ∩ Ii`:
+
+* If `j` received a `REQUEST` from `i`, but `j` has not sent a `GRANT` back yet, then `j` can assume that `i` is waiting to get in the CS.
+* If `j` sent a `GRANT` to `i`, but `j` has not received `RELEASE` back yet, then `j` can assume that `i` is currently in the CS.
 
 ## Credits
 
