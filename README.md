@@ -25,7 +25,8 @@ graph TB
 One can observe from the state machine that for any `j` that satisfies `j ∈ Ri ∩ Ii`:
 
 * If `j` received a `REQUEST` from `i`, but `j` has not sent a `GRANT` back yet, then `j` can assume that `i` is waiting to get in the CS.
-* If `j` sent a `GRANT` to `i`, but `j` has not received `RELEASE` back yet, then `j` can assume that `i` is currently in the CS.
+* If `j` sent a `GRANT` to `i`, but `j` has not received `RELEASE` back yet, then `j` assumes that `i` to be in the CS.
+* If none of the above are true, then `j` assumes `i` NOT to be in the CS.
 
 ## Credits
 
