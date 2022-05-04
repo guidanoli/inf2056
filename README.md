@@ -7,7 +7,7 @@ Every assignment will consist of implementating some distributed algorithm on Si
 
 ## Distributed Mutual Exclusion Algorithms (Sanders, 1987)
 
-Every process `i` in the generalized algorithm is in one of the following three states. We denote the request set of process `i` by `Ri` and the inform set of process of process `i` by `Ii`.
+Every process `i` in the generalized algorithm is in one of the following three states. We denote the request set of process `i` by `Ri` and its inform set by `Ii`.
 
 ```mermaid
 %% State machine for processes in Sanders87
