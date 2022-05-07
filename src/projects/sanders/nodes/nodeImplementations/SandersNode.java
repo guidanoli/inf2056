@@ -31,6 +31,9 @@
  */
 package projects.sanders.nodes.nodeImplementations;
 
+import java.util.HashSet;
+import java.util.PriorityQueue;
+
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
@@ -42,30 +45,41 @@ import sinalgo.nodes.messages.Message;
  */
 public class SandersNode extends Node {
 
-	// TODO: District associated with this node
-
-	// TODO: Flag indicating that this node is in the CS
-
-	// TODO: Current logical clock
-
-	// TODO: Time stamp of this node's request message
-
-	// TODO: Number of nodes that answered this node's request with a yes
-
-	// TODO: Flag indicating that this node has sent a yes to some other node
-	//       and have not received a release message from it yet
-
-	// TODO: The node to whom this node has last sent a yes after receiving
-	//       a request message from it
-
-	// TODO: Time stamp of the request message sent by the node to whom this node
-	//       has last sent a yes
-
-	// TODO: Flag indicating that this node has tried to inquire its yes
-
-	// TODO: Priority queue of request messages ordered by time stamp such that
-	//       removing the message with the lowest time stamp is an easy operation
-
+	// District (set of nodes) associated with this node
+	private HashSet<SandersNode> district;
+	
+	// Flag indicating that this node is in the CS
+	private boolean inCS;
+	
+	// Current logical clock
+	private int currTS;
+	
+	// Time stamp of this node's request message
+	private int myTS;
+	
+	// Number of nodes that answered this node's request with a yes
+	private int yesVotes;
+	
+	// Flag indicating that this node has sent a yes to some other node
+	// and have not received a release message from it yet
+	private boolean hasVoted;
+	
+	// The node to whom this node has last sent a yes after receiving
+	// a request message from it
+	private SandersNode cand;
+	
+	// Time stamp of the request message sent by the node to whom this node
+	// has last sent a yes
+	private int candTS;
+	
+	// Flag indicating that this node has tried to inquire its yes inquired
+	private boolean inquired;
+	
+	// Priority queue of request messages ordered by time stamp such that
+	// removing the message with the lowest time stamp is an easy operation
+	// TODO: Make it a priority queue of RequestMessage
+	private PriorityQueue<SandersNode> deferredQ;
+	
 	@Override
 	public void handleMessages(Inbox inbox) {
 		while (inbox.hasNext()) {
