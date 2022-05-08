@@ -31,22 +31,26 @@
  */
 package projects.sanders.nodes.nodeImplementations;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
+import projects.sanders.nodes.messages.RequestMessage;
+import sinalgo.configuration.Configuration;
+import sinalgo.configuration.CorruptConfigurationEntryException;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.nodes.Node;
+import sinalgo.nodes.edges.Edge;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
+import sinalgo.runtime.Main;
+import sinalgo.tools.logging.Logging;
 
 /**
  * Node that implements the distributed mutual exclusion algorithm specified on (Sanders, 1987).
  * @author Guilherme Dantas
  */
 public class SandersNode extends Node {
-
-	// District (set of nodes) associated with this node
-	private HashSet<SandersNode> district;
 	
 	// Flag indicating that this node is in the CS
 	private boolean inCS;
@@ -65,7 +69,7 @@ public class SandersNode extends Node {
 	private boolean hasVoted;
 	
 	// The node to whom this node has last sent a yes after receiving
-	// a request message from it
+	// a request message from it (or null if there is no such node)
 	private SandersNode cand;
 	
 	// Time stamp of the request message sent by the node to whom this node
@@ -74,11 +78,16 @@ public class SandersNode extends Node {
 	
 	// Flag indicating that this node has tried to inquire its yes inquired
 	private boolean inquired;
-	
+
 	// Priority queue of request messages ordered by time stamp such that
 	// removing the message with the lowest time stamp is an easy operation
-	// TODO: Make it a priority queue of RequestMessage
-	private PriorityQueue<SandersNode> deferredQ;
+	private PriorityQueue<RequestMessage> deferredQ;
+
+	// District (set of node ids) associated with this node
+	private HashSet<Integer> district;
+	
+	// Log for node
+	Logging log = Logging.getLogger("sanders_log");
 	
 	@Override
 	public void handleMessages(Inbox inbox) {
@@ -95,7 +104,31 @@ public class SandersNode extends Node {
 
 	@Override
 	public void init() {
-		// Nothing
+		inCS = false;
+		currTS = 0;
+		myTS = 0;
+		yesVotes = 0;
+		hasVoted = false;
+		cand = null;
+		candTS = 0;
+		inquired = false;
+		deferredQ = new PriorityQueue<RequestMessage>(new RequestMessageComparator());
+		district = newDistrict();
+	}
+	
+	private HashSet<Integer> newDistrict() {
+		HashSet<Integer> district = new HashSet<Integer>();
+		try {
+			String districtString = Configuration.getStringParameter("sanders/s" + this.ID);
+			String[] idStringArray = districtString.split(",");
+			for (String idString : idStringArray) {
+				int id = Integer.parseInt(idString);
+				district.add(id);
+			}
+		} catch (CorruptConfigurationEntryException e) {
+			Main.fatalError(e.getMessage());
+		}
+		return district;
 	}
 
 	@Override
@@ -113,4 +146,26 @@ public class SandersNode extends Node {
 		// Nothing
 	}
 
+	/**
+	 * A comparator implementation for ordering request messages
+	 * @author Guilherme Dantas
+	 */
+	public class RequestMessageComparator implements Comparator<RequestMessage> {
+
+		/**
+		 * If this method returns a negative value, it means that msg1 has a
+		 * higher priority over msg2, and vice-versa. If it returns zero, it
+		 * means they have the same priority (which should never happen in our
+		 * case since it would mean that both messages have the same sender and
+		 * time stamp).
+		 */
+		public int compare(RequestMessage msg1, RequestMessage msg2) {
+			if (msg1.getTimeStamp() == msg2.getTimeStamp()) {
+				return msg1.getSender().ID - msg2.getSender().ID;
+			} else {
+				return msg1.getTimeStamp() - msg2.getTimeStamp();
+			}
+		}
+
+	}
 }

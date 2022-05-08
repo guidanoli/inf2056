@@ -116,7 +116,7 @@
 		<DefaultMessageTransmissionModel value="ConstantTime" />
 
 		<!--Default connectivity model used when none is specified-->
-		<DefaultConnectivityModel value="FullGraph" />
+		<DefaultConnectivityModel value="sanders:FullGraph" />
 
 		<!--Default distribution model used when none is specified-->
 		<DefaultDistributionModel value="Grid2D" />
@@ -131,7 +131,7 @@
 		<DefaultReliabilityModel value="ReliableDelivery" />
 
 		<!--Default node implementation used when none is specified-->
-		<DefaultNodeImplementation value="DummyNode" />
+		<DefaultNodeImplementation value="sanders:SandersNode" />
 
 		<!--***********************************************************************-->
 		<!--  Node storage, position transformation                                -->
@@ -202,6 +202,8 @@
 		</RandomDirection>
 
 		<QUDG rMin="30" rMax="50" ProbabilityType="constant" connectionProbability="0.6"/>
+		
+		<Sanders S1="1,2,3" S2="1,2,4" S3="1,3,4" S4="2,3,4" />
 	</Custom>
 </Document>
 
