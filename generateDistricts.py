@@ -2,6 +2,7 @@ import argparse
 import math
 
 if __name__ == '__main__':
+    # Create argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-n',
@@ -9,24 +10,30 @@ if __name__ == '__main__':
         type=int,
         required=True,
         help='number of nodes')
+
+    # Parse and validate arguments
     args = parser.parse_args()
-    sqrt_n = math.sqrt(args.n)
-    assert sqrt_n == int(sqrt_n), f'{args.n} is not a perfect square'
+    n = args.n
+    sqrt_n = math.sqrt(n)
+    assert sqrt_n == int(sqrt_n), f'{n} is not a perfect square'
     sqrt_n = int(sqrt_n)
-    districts = []
-    for node in range(args.n):
-        district = set()
-        i = node // sqrt_n
-        j = node % sqrt_n
-        for alt_i in range(sqrt_n):
-            neighbour = alt_i * sqrt_n + j + 1
-            district.add(str(neighbour))
-        for alt_j in range(sqrt_n):
-            neighbour = i * sqrt_n + alt_j + 1
-            district.add(str(neighbour))
-        districts.append(
-            's{}="{}"'.format(
-                node + 1,
-                ','.join(
-                    sorted(district))))
-    print('<Sanders {} />'.format(' '.join(districts)))
+
+    # List all rows
+    rows = []
+    for row in range(sqrt_n):
+        rows.append(set(row * sqrt_n + column + 1 for column in range(sqrt_n)))
+
+    # List all columns
+    columns = []
+    for column in range(sqrt_n):
+        columns.append(set(row * sqrt_n + column + 1 for row in range(sqrt_n)))
+
+    # Print XML tag
+    print('<Sanders ', end='')
+    for node in range(n):
+        row = node // sqrt_n
+        column = node % sqrt_n
+        district = sorted(rows[row] | columns[column])
+        print('s{}="'.format(node + 1), end='')
+        print(*district, sep=',', end='" ')
+    print('/>')
