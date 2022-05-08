@@ -76,7 +76,7 @@ public class SandersNode extends Node {
 	// has last sent a yes
 	private int candTS;
 	
-	// Flag indicating that this node has tried to inquire its yes inquired
+	// Flag indicating that this node has tried to inquire its yes
 	private boolean inquired;
 
 	// Priority queue of request messages ordered by time stamp such that
@@ -110,18 +110,16 @@ public class SandersNode extends Node {
 
 	@Override
 	public void init() {
-		inCS = false;
-		currTS = 0;
-		myTS = 0;
-		yesVotes = 0;
-		hasVoted = false;
-		cand = null;
-		candTS = 0;
-		inquired = false;
-		deferredQ = newQueue();
-		district = newDistrict();
-		pDelay = getDelayProbability();
-		pRequest = getRequestProbability();
+		inCS = false;                       // Nodes don't start in the CS
+		currTS = myTS = candTS = 0;         // All time stamps start with 0
+		yesVotes = 0;                       // No one has voted yet
+		hasVoted = false;                   // No one has voted yet
+		cand = null;                        // No one has sent a request message yet
+		inquired = false;                   // No one has sent an inquiry message yet
+		deferredQ = newQueue();             // No one has sent a request message yet (empty queue)
+		district = newDistrict();           // Get districts from configuration file
+		pDelay = getDelayProbability();     // Get delay probability from configuration file 
+		pRequest = getRequestProbability(); // Get request probability from configuration file
 	}
 	
 	private PriorityQueue<RequestMessage> newQueue() {
@@ -174,7 +172,41 @@ public class SandersNode extends Node {
 
 	@Override
 	public void checkRequirements() throws WrongConfigurationException {
-		// Nothing
+		// pDelay ∈ [0,1]
+		if (!(pDelay >= 0.0 && pDelay <= 1.0)) {
+			throw new WrongConfigurationException("pDelay out of range");
+		}
+		// pRequest ∈ [0,1]
+		if (!(pRequest >= 0.0 && pRequest <= 1.0)) {
+			throw new WrongConfigurationException("pRequest out of range");
+		}
+		// i ∈ Si
+		if (!district.contains(ID)) {
+			throw new WrongConfigurationException("node's district doesn't contain itself");
+		}
+		// Si ∩ Sj ≠ ∅
+		for (Edge e : this.outgoingConnections) {
+			Node node = e.endNode;
+			if (node instanceof SandersNode) {
+				SandersNode neighbour = (SandersNode) node;
+				HashSet<Integer> nbDistrict = neighbour.getDistrict();
+				boolean hasNodeInCommon = false;
+				for (Integer i : district) {
+					if (nbDistrict.contains(i)) {
+						hasNodeInCommon = true;
+						break;
+					}
+				}
+				if (!hasNodeInCommon) {
+					throw new WrongConfigurationException("nodes " + ID + " and " + neighbour.ID +
+							                              " have disjoint districts");
+				}
+			}
+		}
+	}
+	
+	public final HashSet<Integer> getDistrict() {
+		return district;
 	}
 
 	/**
