@@ -83,8 +83,14 @@ public class SandersNode extends Node {
 	// removing the message with the lowest time stamp is an easy operation
 	private PriorityQueue<RequestMessage> deferredQ;
 
-	// District (set of node ids) associated with this node
+	// District (set of node IDs) associated with this node
 	private HashSet<Integer> district;
+	
+	// Probability that a node will delay the delivery of a message
+	private double pDelay;
+	
+	// Probability that a node will request access to the CS
+	private double pRequest;
 	
 	// Log for node
 	Logging log = Logging.getLogger("sanders_log");
@@ -112,8 +118,15 @@ public class SandersNode extends Node {
 		cand = null;
 		candTS = 0;
 		inquired = false;
-		deferredQ = new PriorityQueue<RequestMessage>(new RequestMessageComparator());
+		deferredQ = newQueue();
 		district = newDistrict();
+		pDelay = getDelayProbability();
+		pRequest = getRequestProbability();
+	}
+	
+	private PriorityQueue<RequestMessage> newQueue() {
+		RequestMessageComparator cmp = new RequestMessageComparator();
+		return new PriorityQueue<RequestMessage>(cmp);
 	}
 	
 	private HashSet<Integer> newDistrict() {
@@ -129,6 +142,24 @@ public class SandersNode extends Node {
 			Main.fatalError(e.getMessage());
 		}
 		return district;
+	}
+	
+	private double getDelayProbability() {
+		try {
+			return Configuration.getDoubleParameter("sanders/pdelay");
+		} catch (CorruptConfigurationEntryException e) {
+			Main.fatalError(e.getMessage());
+			return 0.0;
+		}
+	}
+
+	private double getRequestProbability() {
+		try {
+			return Configuration.getDoubleParameter("sanders/prequest");
+		} catch (CorruptConfigurationEntryException e) {
+			Main.fatalError(e.getMessage());
+			return 0.0;
+		}
 	}
 
 	@Override

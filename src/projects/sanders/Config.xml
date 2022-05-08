@@ -203,7 +203,7 @@
 
 		<QUDG rMin="30" rMax="50" ProbabilityType="constant" connectionProbability="0.6"/>
 		
-		<Sanders S1="1,2,3" S2="1,2,4" S3="1,3,4" S4="2,3,4" />
+		<Sanders pRequest="0.2" pDelay="0.1" S1="1,2,3" S2="1,2,4" S3="1,3,4" S4="2,3,4" />
 	</Custom>
 </Document>
 
