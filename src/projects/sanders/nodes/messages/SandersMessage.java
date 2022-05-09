@@ -32,14 +32,25 @@
 package projects.sanders.nodes.messages;
 
 import projects.sanders.nodes.nodeImplementations.SandersNode;
+import sinalgo.nodes.messages.Message;
 
 /**
- * Message sent by a node that wants to enter the critical section
+ * Base message
  * @author Guilherme Dantas
  */
-public class RequestMessage extends SandersMessage {
+public class SandersMessage extends Message {
 
-	public RequestMessage(int ts, SandersNode sender) {
-		super(ts, sender);
+	public int ts;
+	public SandersNode sender;
+	
+	public SandersMessage(int ts, SandersNode sender) {
+		this.ts = ts;
+		this.sender = sender;
 	}
+	
+	@Override
+	public Message clone() {
+		return this;
+	}
+
 }

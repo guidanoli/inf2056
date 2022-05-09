@@ -34,12 +34,12 @@ package projects.sanders.nodes.messages;
 import projects.sanders.nodes.nodeImplementations.SandersNode;
 
 /**
- * Message sent by a node that wants to enter the critical section
  * @author Guilherme Dantas
  */
-public class RequestMessage extends SandersMessage {
+public class YesMessage extends SandersMessage {
 
-	public RequestMessage(int ts, SandersNode sender) {
+	public YesMessage(int ts, SandersNode sender) {
 		super(ts, sender);
 	}
+
 }
