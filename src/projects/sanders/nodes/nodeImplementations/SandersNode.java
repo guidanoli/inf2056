@@ -290,7 +290,7 @@ public class SandersNode extends Node {
 	 * @param msg
 	 * @param target
 	 */
-	private void send2(SandersMessage msg, Node target) {
+	private void sendSandersMessage(SandersMessage msg, Node target) {
 		// log.logln("Sending " + msg.toString() + " to " + target.ID);
 		if (target == this) {
 			// Sinalgo doesn't support message sending to itself,
@@ -370,27 +370,21 @@ public class SandersNode extends Node {
 			// any further requests will be queued
 			deferredQ.add(msg);
 			
-			// But if the request that arrived is older than this node's
-			// candidate's, and this node hasn't inquired its vote yet, then...
+			// But if the request that just arrived has a higher priority
+			// over the current candidate, and this node hasn't inquired
+			// its vote yet, then...
 			if (reqMsgComp.compare(msg, candMsg) < 0 && !inquired) {
 				// it will send an inquiry to its candidate with the same
 				// time stamp as its request message
-				send2(new InquireMessage(candMsg.ts, this), candMsg.sender);
+				sendSandersMessage(new InquireMessage(candMsg.ts, this), candMsg.sender);
 				
-				// and set the "inquired" flag to true so that any older
-				// message that come afterwards, but before receiving the
-				// "relinquish" message, will be denied
+				// and set the "inquired" flag to true as to wait for
+				// the "relinquish" reply message
 				inquired = true;
 			}
 		} else {
-			// if this node hasn't voted yet, then the request message
-			// will be approved in the form of a "yes" message with this
-			// node's current time stamp
-			send2(new YesMessage(currTS, this), msg.sender);
-			
-			// and the message will be registered as the one that this node
-			// has selected as the candidate for going into the critical section
-			candMsg = msg;
+			// if this node hasn't voted yet, then the request will be served
+			serveRequest(msg);
 			
 			// register that this node has already voted for a candidate already,
 			// so that any requests that arrive later won't be readily accepted
@@ -419,13 +413,13 @@ public class SandersNode extends Node {
 	 */
 	private void handleInquireMessage(InquireMessage msg) {
 		// this message is sent by a node that accepted this node's request
-		// but has received a request with an older time stamp, and now want
+		// but has received a request with an older time stamp, and now wants
 		// their vote back so that they can vote in the other candidate.
 		if (state == State.Waiting) {
 			// if the node sent the correct time stamp
 			if (msg.ts == myTS) {
 				// then, send a relinquish message
-				send2(new RelinquishMessage(currTS, this), msg.sender);
+				sendSandersMessage(new RelinquishMessage(currTS, this), msg.sender);
 				// decrease the vote counter
 				assert(yesVotes > 0);
 				yesVotes--;
@@ -444,7 +438,7 @@ public class SandersNode extends Node {
 	 * @param msg
 	 */
 	private void serveRequest(RequestMessage msg) {
-		send2(new YesMessage(currTS, this), msg.sender);
+		sendSandersMessage(new YesMessage(currTS, this), msg.sender);
 		candMsg = msg;
 	}
 	
@@ -547,7 +541,7 @@ public class SandersNode extends Node {
 	
 	private void broadcastToDistrict(SandersMessage msg) {
 		for (Node nb : getDistrictNodes()) {
-			send2(msg, nb);
+			sendSandersMessage(msg, nb);
 		}
 	}
 
