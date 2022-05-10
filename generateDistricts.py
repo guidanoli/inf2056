@@ -10,6 +10,24 @@ if __name__ == '__main__':
         type=int,
         required=True,
         help='number of nodes')
+    parser.add_argument(
+        '--pdelay',
+        dest='pdelay',
+        type=float,
+        default=0.1,
+        help='probability of delay')
+    parser.add_argument(
+        '--prequest',
+        dest='prequest',
+        type=float,
+        default=0.2,
+        help='probability of request')
+    parser.add_argument(
+        '--prelease',
+        dest='prelease',
+        type=float,
+        default=0.2,
+        help='probability of release')
 
     # Parse and validate arguments
     args = parser.parse_args()
@@ -28,8 +46,16 @@ if __name__ == '__main__':
     for column in range(sqrt_n):
         columns.append(set(row * sqrt_n + column + 1 for row in range(sqrt_n)))
 
+    # Format probabilities
+    ptags = []
+    for pname in ('delay', 'request', 'release'):
+        argKey = 'p' + pname
+        argValue = getattr(args, argKey)
+        xmlKey = 'p' + pname.title()
+        ptags.append(f'{xmlKey}="{argValue:.2f}"')
+
     # Print XML tag
-    print('<Sanders ', end='')
+    print('<Sanders {} '.format(' '.join(ptags)), end='')
     for node in range(n):
         row = node // sqrt_n
         column = node % sqrt_n
