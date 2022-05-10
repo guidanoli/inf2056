@@ -53,6 +53,7 @@ import sinalgo.nodes.Node;
 import sinalgo.nodes.edges.Edge;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
+import sinalgo.runtime.Global;
 import sinalgo.runtime.Main;
 import sinalgo.tools.Tools;
 import sinalgo.tools.statistics.Distribution;
@@ -97,13 +98,9 @@ public class SandersNode extends Node {
 	// and have not received a release message from it yet
 	private boolean hasVoted;
 	
-	// The node to whom this node has last sent a yes after receiving
-	// a request message from it (or null if there is no such node)
-	private SandersNode cand;
-	
-	// Time stamp of the request message sent by the node to whom this node
-	// has last sent a yes
-	private int candTS;
+	// The request message that was last replied with a yes from this node
+	// or null if this node has not sent a yes yet
+	private RequestMessage candMsg;
 	
 	// Flag indicating that this node has tried to inquire its yes
 	private boolean inquired;
@@ -125,7 +122,8 @@ public class SandersNode extends Node {
 	private double pRelease;
 	
 	// Inbox for messages sent this node to itself
-	private ArrayList<Message> myInbox;
+	private ArrayList<Message> myCurrInbox;
+	private ArrayList<Message> myNextInbox;
 
 	// --------------------------------------------------------------------------------------------
 	// Initialization
@@ -136,18 +134,19 @@ public class SandersNode extends Node {
 	 */
 	@Override
 	public void init() {
-		state = State.MappingDistrict;      // Nodes start mapping their district
-		currTS = myTS = candTS = 1;         // All time stamps start with 1
-		yesVotes = 0;                       // No one has voted yet
-		hasVoted = false;                   // No one has voted yet
-		inquired = false;                   // No one has sent an inquiry message yet
-		cand = null;                        // No one has sent a request message yet
-		deferredQ = newEmptyQueue();        // No one has sent a request message yet
-		district = newDistrict();           // Get districts from configuration file
-		pDelay = getDelayProbability();     // Get delay probability from configuration file 
-		pRequest = getRequestProbability(); // Get request probability from configuration file
-		pRelease = getReleaseProbability(); // Get release probability from configuration file
-		myInbox = new ArrayList<Message>(); // Create fake inbox for itself
+		state = State.MappingDistrict;          // Nodes start mapping their district
+		currTS = myTS = 1;                      // All time stamps start with 1
+		yesVotes = 0;                           // No one has voted yet
+		hasVoted = false;                       // No one has voted yet
+		inquired = false;                       // No one has sent an inquiry message yet
+		candMsg = null;                         // No one has sent a request message yet
+		deferredQ = newEmptyQueue();            // No one has sent a request message yet
+		district = newDistrict();               // Get districts from configuration file
+		pDelay = getDelayProbability();         // Get delay probability from configuration file 
+		pRequest = getRequestProbability();     // Get request probability from configuration file
+		pRelease = getReleaseProbability();     // Get release probability from configuration file
+		myNextInbox = new ArrayList<Message>(); // Inbox for messages from and to this node (write-only)
+		myCurrInbox = new ArrayList<Message>(); // Inbox for messages from and to this node (read-only)
 	}
 	
 	/**
@@ -270,7 +269,7 @@ public class SandersNode extends Node {
 		myTS = currTS; // save the time stamp of the request
 		RequestMessage msg = new RequestMessage(currTS, this);
 		for (Node nb : getDistrictNodes()) {
-			wrappedSend(msg, nb);
+			send2(msg, nb);
 		}
 		state = State.Waiting;
 	}
@@ -282,7 +281,7 @@ public class SandersNode extends Node {
 		assert(state == State.InCS);
 		ReleaseMessage msg = new ReleaseMessage(currTS, this);
 		for (Node nb : getDistrictNodes()) {
-			wrappedSend(msg, nb);
+			send2(msg, nb);
 		}
 		state = State.NotInCS;
 	}
@@ -296,11 +295,11 @@ public class SandersNode extends Node {
 	 * @param msg
 	 * @param target
 	 */
-	private void wrappedSend(Message msg, Node target) {
+	private void send2(Message msg, Node target) {
 		if (target == this) {
 			// Sinalgo doesn't support message sending to itself,
 			// so we simulate it by having an internal inbox
-			myInbox.add(msg);
+			myNextInbox.add(msg);
 		} else {
 			// If the target is not itself, use Sinalgo's usual way
 			send(msg, target);
@@ -325,13 +324,13 @@ public class SandersNode extends Node {
 		 * we'll only handle them after all the messages in the inbox
 		 * of messages from other nodes 
 		 */
-		for (Message msg : myInbox) {
+		for (Message msg : myCurrInbox) {
 			if (msg instanceof SandersMessage) {
 				handleSandersMessage((SandersMessage) msg);
 			}
 		}
 		/**
-		 * sinalgo.nodes.Node#postStep() will empty myInbox
+		 * sinalgo.nodes.Node#preStep() will move myNextInbox to myCurrentInbox
 		 */
 	}
 	
@@ -350,6 +349,10 @@ public class SandersNode extends Node {
 			handleYesMessage((YesMessage) msg);
 		} else if (msg instanceof InquireMessage) {
 			handleInquireMessage((InquireMessage) msg);
+		} else if (msg instanceof RelinquishMessage) {
+			handleRelinquishMessage((RelinquishMessage) msg);
+		} else if (msg instanceof ReleaseMessage) {
+			handleReleaseMessage((ReleaseMessage) msg);
 		}
 	}
 
@@ -365,10 +368,10 @@ public class SandersNode extends Node {
 			
 			// But if the request that arrived is older than this node's
 			// candidate's, and this node hasn't inquired its vote yet, then...
-			if (msg.ts < candTS && !inquired) {
+			if (msg.ts < candMsg.ts && !inquired) {
 				// it will send an inquiry to its candidate with the same
 				// time stamp as its request message
-				wrappedSend(new InquireMessage(candTS, this), cand);
+				send2(new InquireMessage(candMsg.ts, this), candMsg.sender);
 				
 				// and set the "inquired" flag to true so that any older
 				// message that come afterwards, but before receiving the
@@ -379,16 +382,11 @@ public class SandersNode extends Node {
 			// if this node hasn't voted yet, then the request message
 			// will be approved in the form of a "yes" message with this
 			// node's current time stamp
-			wrappedSend(new YesMessage(currTS, this), msg.sender);
+			send2(new YesMessage(currTS, this), msg.sender);
 			
-			// and the message sender will be registered as this node's
-			// candidate for accessing the critical region
-			cand = msg.sender;
-			
-			// the time stamp of the message is also registered as to compare
-			// with any request messages that might arrive later with a lower
-			// time stamp (which will unleash the inquire-relinquish exchange)
-			candTS = msg.ts;
+			// and the message will be registered as the one that this node
+			// has selected as the candidate for going into the critical section
+			candMsg = msg;
 			
 			// register that this node has already voted for a candidate already,
 			// so that any requests that arrive later won't be readily accepted
@@ -401,9 +399,17 @@ public class SandersNode extends Node {
 	 * @param msg
 	 */
 	private void handleYesMessage(YesMessage msg) {
+		// this message is sent by nodes that received this node's request
+		// and haven't voted in any other candidate until that point
 		if (state == State.Waiting) {
-			assert(yesVotes < district.size());
-			yesVotes++;
+			// we then increase the vote counter
+			if (yesVotes < district.size()) {
+				yesVotes++;
+			} else {
+				Global.log.logln("Received too many YES messages");
+			}
+		} else {
+			Global.log.logln("Received YES unexpectedly");
 		}
 	}
 	
@@ -412,43 +418,76 @@ public class SandersNode extends Node {
 	 * @param msg
 	 */
 	private void handleInquireMessage(InquireMessage msg) {
+		// this message is sent by a node that accepted this node's request
+		// but has received a request with an older time stamp, and now want
+		// their vote back so that they can vote in the other candidate
 		if (state == State.Waiting) {
-			if (myTS == msg.ts) {
-				wrappedSend(new RelinquishMessage(currTS, this), msg.sender);
-				assert(yesVotes > 0);
-				yesVotes--;
+			// if the node sent the correct time stamp
+			if (msg.ts == myTS) {
+				// then, send a relinquish message
+				send2(new RelinquishMessage(currTS, this), msg.sender);
+				// decrease the vote counter
+				if (yesVotes > 0) {
+					yesVotes--;
+				} else {
+					Global.log.logln("Received too many INQUIRE messages");
+				}
 			}
+		} else {
+			Global.log.logln("Received INQUIRE unexpectedly");
 		}
+	}
+
+	/**
+	 * Send a YES to requesting node and register message as the one selected
+	 * @param msg
+	 */
+	private void serveRequest(RequestMessage msg) {
+		send2(new YesMessage(currTS, this), msg.sender);
+		candMsg = msg;
 	}
 	
 	/**
+	 * Handle relinquish message
+	 * @param msg
+	 */
+	private void handleRelinquishMessage(RelinquishMessage msg) {
+		deferredQ.add(candMsg);
+		serveRequest(deferredQ.remove());
+		inquired = false;
+	}
+
+	/**
 	 * Handle release message
-	 * @param relMsg
+	 * @param msg
 	 */
 	private void handleReleaseMessage(ReleaseMessage msg) {
-		
+		if (deferredQ.isEmpty()) {
+			hasVoted = false;
+		} else {
+			serveRequest(deferredQ.remove());
+		}
+		inquired = false;
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Graphical User Interface
 	// --------------------------------------------------------------------------------------------
 	
-	/**
-	 * Show district in GUI 
-	 */
-	@NodePopupMethod(menuText="Show state")
-	public void showState() {
-		Tools.appendToOutput("Node " + ID + " is in state " + state.name() + "\n");
+	@Override
+	public String toString() {
+		return "ID: " + ID + "\n" +
+				"State: " + state + "\n" +
+				"District: " + district + "\n" +
+				"Request PQ: " + deferredQ + "\n" +
+				"Has voted: " + hasVoted + "\n" +
+				"Candidate: " + candMsg + "\n" +
+				"Has inquired: " + inquired + "\n" +
+				"# of Yes votes: " + yesVotes + "\n" +
+				"Current timestamp: " + currTS + "\n" +
+				"Timestamp of request: " + myTS;
 	}
 	
-	/**
-	 * Show district in GUI 
-	 */
-	@NodePopupMethod(menuText="Show district")
-	public void showDistrict() {
-		Tools.appendToOutput("District of node " + ID + ": " + district.toString() + "\n");
-	}
-
 	/* (non-Javadoc)
 	 * @see sinalgo.nodes.Node#draw(java.awt.Graphics, sinalgo.gui.transformation.PositionTransformation, boolean)
 	 */
@@ -543,11 +582,6 @@ public class SandersNode extends Node {
 				state = State.NotInCS;
 			}
 			break;
-		case InCS:
-			if (rand.nextDouble() <= pRelease) {
-				exitCS();
-			}
-			break;
 		case NotInCS:
 			if (rand.nextDouble() <= pRequest) {
 				enterCS();
@@ -559,6 +593,11 @@ public class SandersNode extends Node {
 				yesVotes = 0;
 			}
 			break;
+		case InCS:
+			if (rand.nextDouble() <= pRelease) {
+				exitCS();
+			}
+			break;
 		default:
 			break;
 		}
@@ -566,12 +605,18 @@ public class SandersNode extends Node {
 
 	@Override
 	public void neighborhoodChange() {
-		// Nothing
+		if (state != State.MappingDistrict) {
+			assert(isDistrictMapped());
+		}
 	}
 
 	@Override
 	public void postStep() {
-		myInbox.clear();
+		// Swap inboxes and empty next one
+		ArrayList<Message> tmp = myCurrInbox;
+		myCurrInbox = myNextInbox;
+		myNextInbox = tmp;
+		myNextInbox.clear();
 	}
 
 	// --------------------------------------------------------------------------------------------

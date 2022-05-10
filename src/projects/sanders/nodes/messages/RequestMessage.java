@@ -42,4 +42,9 @@ public class RequestMessage extends SandersMessage {
 	public RequestMessage(int ts, SandersNode sender) {
 		super(ts, sender);
 	}
+	
+	@Override
+	public String toString() {
+		return "REQ(sender=" + sender.ID + ", ts=" + ts + ")";
+	}
 }
