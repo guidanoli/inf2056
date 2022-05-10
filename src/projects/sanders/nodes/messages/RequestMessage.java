@@ -44,7 +44,7 @@ public class RequestMessage extends SandersMessage {
 	}
 	
 	@Override
-	public String toString() {
-		return "REQ(sender=" + sender.ID + ", ts=" + ts + ")";
+	public String getName() {
+		return "REQUEST";
 	}
 }

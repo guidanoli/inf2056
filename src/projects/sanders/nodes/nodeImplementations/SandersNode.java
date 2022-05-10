@@ -55,7 +55,7 @@ import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 import sinalgo.runtime.Global;
 import sinalgo.runtime.Main;
-import sinalgo.tools.Tools;
+import sinalgo.tools.logging.Logging;
 import sinalgo.tools.statistics.Distribution;
 
 /**
@@ -76,7 +76,7 @@ public class SandersNode extends Node {
 		MappingDistrict,  // still establishing connection to nodes in district
 		NotInCS,          // node is not in the critical section
 		Waiting,          // node is waiting for approvals to get into the critical section
-		InCS              // node is not in the critical section
+		InCS              // node is in the critical section
 	}
 	
 	// Get random number generator singleton from framework
@@ -104,6 +104,9 @@ public class SandersNode extends Node {
 	
 	// Flag indicating that this node has tried to inquire its yes
 	private boolean inquired;
+	
+	// Request message comparator
+	private RequestMessageComparator reqMsgComp;
 
 	// Priority queue of requests ordered by time stamp and node IDs such that
 	// removing the message with the lowest time stamp is an easy operation
@@ -124,6 +127,9 @@ public class SandersNode extends Node {
 	// Inbox for messages sent this node to itself
 	private ArrayList<Message> myCurrInbox;
 	private ArrayList<Message> myNextInbox;
+	
+	// Log for information about Sanders nodes
+	private Logging log = Logging.getLogger("sanders_log.txt");
 
 	// --------------------------------------------------------------------------------------------
 	// Initialization
@@ -140,22 +146,16 @@ public class SandersNode extends Node {
 		hasVoted = false;                       // No one has voted yet
 		inquired = false;                       // No one has sent an inquiry message yet
 		candMsg = null;                         // No one has sent a request message yet
-		deferredQ = newEmptyQueue();            // No one has sent a request message yet
-		district = newDistrict();               // Get districts from configuration file
+		district = getDistrict();               // Get districts from configuration file
 		pDelay = getDelayProbability();         // Get delay probability from configuration file 
 		pRequest = getRequestProbability();     // Get request probability from configuration file
 		pRelease = getReleaseProbability();     // Get release probability from configuration file
 		myNextInbox = new ArrayList<Message>(); // Inbox for messages from and to this node (write-only)
 		myCurrInbox = new ArrayList<Message>(); // Inbox for messages from and to this node (read-only)
-	}
-	
-	/**
-	 * Create empty priority queue for request messages
-	 * @return
-	 */
-	private PriorityQueue<RequestMessage> newEmptyQueue() {
-		RequestMessageComparator cmp = new RequestMessageComparator();
-		return new PriorityQueue<RequestMessage>(cmp);
+		
+		// create empty priority queue with special comparator
+		reqMsgComp = new RequestMessageComparator();
+		deferredQ = new PriorityQueue<RequestMessage>(reqMsgComp);
 	}
 	
 	/**
@@ -164,7 +164,7 @@ public class SandersNode extends Node {
 	 * a message will pop up in the GUI alerting of this fatal error.
 	 * @return set of node IDs
 	 */
-	private HashSet<Integer> newDistrict() {
+	private HashSet<Integer> getDistrict() {
 		HashSet<Integer> district = new HashSet<Integer>();
 		try {
 			String districtString = Configuration.getStringParameter("sanders/s" + this.ID);
@@ -266,12 +266,9 @@ public class SandersNode extends Node {
 	 */
 	private void enterCS() {
 		assert(state == State.NotInCS);
-		myTS = currTS; // save the time stamp of the request
-		RequestMessage msg = new RequestMessage(currTS, this);
-		for (Node nb : getDistrictNodes()) {
-			send2(msg, nb);
-		}
 		state = State.Waiting;
+		myTS = currTS; // save the time stamp of the request
+		broadcastToDistrict(new RequestMessage(myTS, this));
 	}
 	
 	/**
@@ -279,11 +276,9 @@ public class SandersNode extends Node {
 	 */
 	private void exitCS() {
 		assert(state == State.InCS);
-		ReleaseMessage msg = new ReleaseMessage(currTS, this);
-		for (Node nb : getDistrictNodes()) {
-			send2(msg, nb);
-		}
 		state = State.NotInCS;
+		yesVotes = 0;
+		broadcastToDistrict(new ReleaseMessage(currTS, this));
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -295,7 +290,8 @@ public class SandersNode extends Node {
 	 * @param msg
 	 * @param target
 	 */
-	private void send2(Message msg, Node target) {
+	private void send2(SandersMessage msg, Node target) {
+		// log.logln("Sending " + msg.toString() + " to " + target.ID);
 		if (target == this) {
 			// Sinalgo doesn't support message sending to itself,
 			// so we simulate it by having an internal inbox
@@ -317,6 +313,8 @@ public class SandersNode extends Node {
 		for (Message msg : inbox) {
 			if (msg instanceof SandersMessage) {
 				handleSandersMessage((SandersMessage) msg);
+			} else {
+				Global.log.logln("Received unexpected message " + msg);
 			}
 		}
 		/**
@@ -327,10 +325,14 @@ public class SandersNode extends Node {
 		for (Message msg : myCurrInbox) {
 			if (msg instanceof SandersMessage) {
 				handleSandersMessage((SandersMessage) msg);
+			} else {
+				Global.log.logln("Received unexpected message " + msg);
 			}
 		}
 		/**
-		 * sinalgo.nodes.Node#preStep() will move myNextInbox to myCurrentInbox
+		 * sinalgo.nodes.Node#postStep() will:
+		 * - move myNextInbox to myCurrentInbox
+		 * - empty myNextInbox
 		 */
 	}
 	
@@ -353,6 +355,8 @@ public class SandersNode extends Node {
 			handleRelinquishMessage((RelinquishMessage) msg);
 		} else if (msg instanceof ReleaseMessage) {
 			handleReleaseMessage((ReleaseMessage) msg);
+		} else {
+			Global.log.logln("Received unexpected message " + msg);
 		}
 	}
 
@@ -368,7 +372,7 @@ public class SandersNode extends Node {
 			
 			// But if the request that arrived is older than this node's
 			// candidate's, and this node hasn't inquired its vote yet, then...
-			if (msg.ts < candMsg.ts && !inquired) {
+			if (reqMsgComp.compare(msg, candMsg) < 0 && !inquired) {
 				// it will send an inquiry to its candidate with the same
 				// time stamp as its request message
 				send2(new InquireMessage(candMsg.ts, this), candMsg.sender);
@@ -403,11 +407,7 @@ public class SandersNode extends Node {
 		// and haven't voted in any other candidate until that point
 		if (state == State.Waiting) {
 			// we then increase the vote counter
-			if (yesVotes < district.size()) {
-				yesVotes++;
-			} else {
-				Global.log.logln("Received too many YES messages");
-			}
+			yesVotes++;
 		} else {
 			Global.log.logln("Received YES unexpectedly");
 		}
@@ -420,21 +420,22 @@ public class SandersNode extends Node {
 	private void handleInquireMessage(InquireMessage msg) {
 		// this message is sent by a node that accepted this node's request
 		// but has received a request with an older time stamp, and now want
-		// their vote back so that they can vote in the other candidate
+		// their vote back so that they can vote in the other candidate.
 		if (state == State.Waiting) {
 			// if the node sent the correct time stamp
 			if (msg.ts == myTS) {
 				// then, send a relinquish message
 				send2(new RelinquishMessage(currTS, this), msg.sender);
 				// decrease the vote counter
-				if (yesVotes > 0) {
-					yesVotes--;
-				} else {
-					Global.log.logln("Received too many INQUIRE messages");
-				}
+				assert(yesVotes > 0);
+				yesVotes--;
+			} else {
+				Global.log.logln("Received INQUIRE with wrong TS");
 			}
 		} else {
-			Global.log.logln("Received INQUIRE unexpectedly");
+			// sometimes, a node might send an inquire message but the
+			// node already got into the critical section, so it's too late
+			// for it to return its vote
 		}
 	}
 
@@ -493,17 +494,17 @@ public class SandersNode extends Node {
 	 */
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		switch (state) {
-		case MappingDistrict: // grey
+		case MappingDistrict: // grey (OFF)
 			this.setColor(new Color(0.5f, 0.5f, 0.5f));
 			break;
-		case InCS: // red
-			this.setColor(new Color(1.0f, 0.25f, 0.25f));
+		case NotInCS: // black (ON, doing elsewhere)
+			this.setColor(new Color(0.0f, 0.0f, 0.0f));
 			break;
-		case NotInCS: // green
-			this.setColor(new Color(0.25f, 0.5f, 0.25f));
+		case Waiting: // yellow (trying to get in CS)
+			this.setColor(new Color(0.8f, 0.67f, 0.0f));
 			break;
-		case Waiting: // yellow
-			this.setColor(new Color(1.0f, 1.0f, 0.0f));
+		case InCS: // green (inside the CS)
+			this.setColor(new Color(0.0f, 0.8f, 0.0f));
 			break;
 		default:
 			break;
@@ -514,6 +515,10 @@ public class SandersNode extends Node {
 	// --------------------------------------------------------------------------------------------
 	// Other methods
 	// --------------------------------------------------------------------------------------------
+	
+	public State getState() {
+		return state;
+	}
 	
 	/**
 	 * Check if node is in node's district
@@ -538,6 +543,12 @@ public class SandersNode extends Node {
 			}
 		}
 		return nodes;
+	}
+	
+	private void broadcastToDistrict(SandersMessage msg) {
+		for (Node nb : getDistrictNodes()) {
+			send2(msg, nb);
+		}
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -590,7 +601,6 @@ public class SandersNode extends Node {
 		case Waiting:
 			if (yesVotes >= district.size()) {
 				state = State.InCS;
-				yesVotes = 0;
 			}
 			break;
 		case InCS:

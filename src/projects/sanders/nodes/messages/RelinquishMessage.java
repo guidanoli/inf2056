@@ -42,4 +42,9 @@ public class RelinquishMessage extends SandersMessage {
 		super(ts, sender);
 	}
 
+	@Override
+	public String getName() {
+		return "RELINQUISH";
+	}
+
 }

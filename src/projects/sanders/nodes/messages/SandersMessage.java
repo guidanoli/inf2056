@@ -38,7 +38,7 @@ import sinalgo.nodes.messages.Message;
  * Base message
  * @author Guilherme Dantas
  */
-public class SandersMessage extends Message {
+public abstract class SandersMessage extends Message {
 
 	public int ts;
 	public SandersNode sender;
@@ -52,5 +52,11 @@ public class SandersMessage extends Message {
 	public Message clone() {
 		return this;
 	}
+	
+	public abstract String getName();
 
+	@Override
+	public String toString() {
+		return getName() + "(sender=" + sender.ID + ", ts=" + ts + ")";
+	}
 }
