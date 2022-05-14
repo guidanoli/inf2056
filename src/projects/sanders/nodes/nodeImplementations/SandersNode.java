@@ -81,6 +81,15 @@ public class SandersNode extends Node {
 	// Get random number generator singleton from framework
 	private static Random rand = Distribution.getRandom();
 	
+	// Outbox of delayed messages
+	private ArrayList<DelayedMessage> delayedOutbox;
+	
+	// Number of rounds left to delay the sending of messages
+	private int nDelayedRoundsLeft;
+	
+	// Number of rounds to delay messages
+	private static final int nDelayRounds = 2;
+	
 	// The state of the node 
 	private State state;
 	
@@ -154,6 +163,10 @@ public class SandersNode extends Node {
 		// create empty priority queue with special comparator
 		reqMsgComp = new RequestMessageComparator();
 		deferredQ = new PriorityQueue<RequestMessage>(reqMsgComp);
+		
+		// no delayed messages
+		nDelayedRoundsLeft = 0;
+		delayedOutbox = new ArrayList<DelayedMessage>();
 	}
 	
 	/**
@@ -289,7 +302,21 @@ public class SandersNode extends Node {
 	 * @param target
 	 */
 	private void sendSandersMessage(SandersMessage msg, Node target) {
-		// log.logln("Sending " + msg.toString() + " to " + target.ID);
+		if (nDelayedRoundsLeft == 0) {
+			sendSandersMessageNow(msg, target);
+		} else {
+			delayedOutbox.add(new DelayedMessage(msg, target));
+		}
+	}
+	
+	/**
+	 * Wrapped send method (handles messages to itself) without
+	 * checking if it needs to be delayed
+	 * @note don't call this method directly
+	 * @param msg
+	 * @param target
+	 */
+	private void sendSandersMessageNow(SandersMessage msg, Node target) {
 		if (target == this) {
 			// Sinalgo doesn't support message sending to itself,
 			// so we simulate it by having an outbox for itself
@@ -579,6 +606,23 @@ public class SandersNode extends Node {
 	 */
 	@Override
 	public void preStep() {
+		// If messages aren't delayed...
+		if (nDelayedRoundsLeft == 0) {
+			// If there are delayed messages to be sent
+			if (!delayedOutbox.isEmpty()) {
+				for (DelayedMessage delayedMsg : delayedOutbox) {
+					sendSandersMessageNow(delayedMsg.msg, delayedMsg.target);
+				}
+				// clear delayed messages outbox
+				delayedOutbox.clear();
+			}
+			// Check if messages should be delayed
+			if (rand.nextDouble() <= pDelay) {
+				nDelayedRoundsLeft = nDelayRounds;
+			}
+		}
+		
+		// Check if the state of the node should be changed
 		switch (state) {
 		case MappingDistrict:
 			if (isDistrictMapped()) {
@@ -614,6 +658,12 @@ public class SandersNode extends Node {
 
 	@Override
 	public void postStep() {
+		// If messages are being delayed,
+		if (nDelayedRoundsLeft > 0) {
+			// decrease the counter
+			nDelayedRoundsLeft--;
+		}
+		
 		// Swap boxes and clear outbox
 		ArrayList<Message> tmp = myInbox;
 		myInbox = myOutbox;
@@ -646,5 +696,19 @@ public class SandersNode extends Node {
 			}
 		}
 
+	}
+	
+	/**
+	 * Simple class for delayed messages
+	 * @author Guilherme Dantas
+	 */
+	public class DelayedMessage {
+		public SandersMessage msg;
+		public Node target;
+		
+		public DelayedMessage(SandersMessage msg, Node target) {
+			this.msg = msg;
+			this.target = target;
+		}
 	}
 }
