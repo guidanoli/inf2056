@@ -124,8 +124,10 @@ public class SandersNode extends Node {
 	private double pRelease;
 	
 	// Inbox for messages sent this node to itself
-	private ArrayList<Message> myCurrInbox;
-	private ArrayList<Message> myNextInbox;
+	private ArrayList<Message> myInbox;
+	
+	// Outbox for messages sent this node by itself
+	private ArrayList<Message> myOutbox;
 	
 	// --------------------------------------------------------------------------------------------
 	// Initialization
@@ -146,8 +148,8 @@ public class SandersNode extends Node {
 		pDelay = getDelayProbability();         // Get delay probability from configuration file 
 		pRequest = getRequestProbability();     // Get request probability from configuration file
 		pRelease = getReleaseProbability();     // Get release probability from configuration file
-		myNextInbox = new ArrayList<Message>(); // Inbox for messages from and to this node (write-only)
-		myCurrInbox = new ArrayList<Message>(); // Inbox for messages from and to this node (read-only)
+		myInbox = new ArrayList<Message>();     // Inbox for messages from itself (read-only)
+		myOutbox = new ArrayList<Message>();    // Inbox for messages to itself (append-only)
 		
 		// create empty priority queue with special comparator
 		reqMsgComp = new RequestMessageComparator();
@@ -290,8 +292,8 @@ public class SandersNode extends Node {
 		// log.logln("Sending " + msg.toString() + " to " + target.ID);
 		if (target == this) {
 			// Sinalgo doesn't support message sending to itself,
-			// so we simulate it by having an internal inbox
-			myNextInbox.add(msg);
+			// so we simulate it by having an outbox for itself
+			myOutbox.add(msg);
 		} else {
 			// If the target is not itself, use Sinalgo's usual way
 			send(msg, target);
@@ -318,7 +320,7 @@ public class SandersNode extends Node {
 		 * we'll only handle them after all the messages in the inbox
 		 * of messages from other nodes 
 		 */
-		for (Message msg : myCurrInbox) {
+		for (Message msg : myInbox) {
 			if (msg instanceof SandersMessage) {
 				handleSandersMessage((SandersMessage) msg);
 			} else {
@@ -612,11 +614,11 @@ public class SandersNode extends Node {
 
 	@Override
 	public void postStep() {
-		// Swap inboxes and empty next one
-		ArrayList<Message> tmp = myCurrInbox;
-		myCurrInbox = myNextInbox;
-		myNextInbox = tmp;
-		myNextInbox.clear();
+		// Swap boxes and clear outbox
+		ArrayList<Message> tmp = myInbox;
+		myInbox = myOutbox;
+		myOutbox = tmp;
+		myOutbox.clear();
 	}
 
 	// --------------------------------------------------------------------------------------------
