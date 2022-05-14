@@ -55,7 +55,6 @@ import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 import sinalgo.runtime.Global;
 import sinalgo.runtime.Main;
-import sinalgo.tools.logging.Logging;
 import sinalgo.tools.statistics.Distribution;
 
 /**
@@ -128,9 +127,6 @@ public class SandersNode extends Node {
 	private ArrayList<Message> myCurrInbox;
 	private ArrayList<Message> myNextInbox;
 	
-	// Log for information about Sanders nodes
-	private Logging log = Logging.getLogger("sanders_log.txt");
-
 	// --------------------------------------------------------------------------------------------
 	// Initialization
 	// --------------------------------------------------------------------------------------------
