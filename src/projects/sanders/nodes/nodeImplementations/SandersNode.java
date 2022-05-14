@@ -88,7 +88,7 @@ public class SandersNode extends Node {
 	private int nDelayedRoundsLeft;
 	
 	// Number of rounds to delay messages
-	private static final int nDelayRounds = 2;
+	private int nDelayRounds;
 	
 	// The state of the node 
 	private State state;
@@ -166,6 +166,7 @@ public class SandersNode extends Node {
 		
 		// no delayed messages
 		nDelayedRoundsLeft = 0;
+		nDelayRounds = getDelayRounds();
 		delayedOutbox = new ArrayList<DelayedMessage>();
 	}
 	
@@ -226,6 +227,19 @@ public class SandersNode extends Node {
 		} catch (CorruptConfigurationEntryException e) {
 			Main.fatalError(e.getMessage());
 			return 0.0;
+		}
+	}
+
+	/**
+	 * Read the number of rounds to delay from configuration
+	 * @return number of delay rounds
+	 */
+	private int getDelayRounds() {
+		try {
+			return Configuration.getIntegerParameter("sanders/delay");
+		} catch (CorruptConfigurationEntryException e) {
+			Main.fatalError(e.getMessage());
+			return 0;
 		}
 	}
 
