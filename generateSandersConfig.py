@@ -15,19 +15,19 @@ if __name__ == '__main__':
         dest='pdelay',
         type=float,
         default=0.1,
-        help='probability of delay')
+        help='probability of delay (default: 0.1)')
     parser.add_argument(
         '--prequest',
         dest='prequest',
         type=float,
         default=0.2,
-        help='probability of request')
+        help='probability of request (default: 0.2)')
     parser.add_argument(
         '--prelease',
         dest='prelease',
         type=float,
         default=0.2,
-        help='probability of release')
+        help='probability of release (default: 0.2)')
 
     # Parse and validate arguments
     args = parser.parse_args()
