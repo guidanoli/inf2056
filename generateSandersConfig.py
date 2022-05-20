@@ -14,8 +14,8 @@ if __name__ == '__main__':
         '--pdelay',
         dest='pdelay',
         type=float,
-        default=0.1,
-        help='probability of delay (default: 0.1)')
+        default=0.5,
+        help='probability of delay (default: 0.5)')
     parser.add_argument(
         '--prequest',
         dest='prequest',
