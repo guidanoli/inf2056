@@ -26,8 +26,8 @@ if __name__ == '__main__':
         '--prelease',
         dest='prelease',
         type=float,
-        default=0.2,
-        help='probability of release (default: 0.2)')
+        default=1.0,
+        help='probability of release (default: 1.0)')
     parser.add_argument(
         '--delay',
         dest='delay',

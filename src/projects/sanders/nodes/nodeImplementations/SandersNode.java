@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import projects.sanders.LogL;
 import projects.sanders.nodes.messages.InquireMessage;
 import projects.sanders.nodes.messages.ReleaseMessage;
 import projects.sanders.nodes.messages.RelinquishMessage;
@@ -55,6 +56,7 @@ import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 import sinalgo.runtime.Global;
 import sinalgo.runtime.Main;
+import sinalgo.tools.logging.Logging;
 import sinalgo.tools.statistics.Distribution;
 
 /**
@@ -137,6 +139,9 @@ public class SandersNode extends Node {
 	
 	// Outbox for messages sent this node by itself
 	private ArrayList<Message> myOutbox;
+	
+	// Log for internal details
+	private static Logging log = Logging.getLogger("sanders.log");
 	
 	// --------------------------------------------------------------------------------------------
 	// Initialization
@@ -283,6 +288,15 @@ public class SandersNode extends Node {
 	}
 
 	// --------------------------------------------------------------------------------------------
+	// Helper methods
+	// --------------------------------------------------------------------------------------------
+
+	private void changeState(State newState) {
+		log.logln(LogL.NODE_STATE_CHANGE, "NODE_STATE_CHANGE;" + (int)Global.currentTime + ";" + ID + ";" + newState);
+		state = newState;
+	}
+	
+	// --------------------------------------------------------------------------------------------
 	// Critical section methods
 	// --------------------------------------------------------------------------------------------
 	
@@ -291,7 +305,7 @@ public class SandersNode extends Node {
 	 */
 	private void enterCS() {
 		assert(state == State.NotInCS);
-		state = State.Waiting;
+		changeState(State.Waiting);
 		myTS = currTS; // save the time stamp of the request
 		broadcastToDistrict(new RequestMessage(myTS, this));
 	}
@@ -301,7 +315,7 @@ public class SandersNode extends Node {
 	 */
 	private void exitCS() {
 		assert(state == State.InCS);
-		state = State.NotInCS;
+		changeState(State.NotInCS);
 		yesVotes = 0;
 		broadcastToDistrict(new ReleaseMessage(currTS, this));
 	}
@@ -462,6 +476,8 @@ public class SandersNode extends Node {
 				// decrease the vote counter
 				assert(yesVotes > 0);
 				yesVotes--;
+				// log this event
+				log.logln(LogL.RELINQUISH, "RELINQUISH;" + (int)Global.currentTime + ";" + ID);
 			} else {
 				Global.log.logln("Received INQUIRE with wrong TS");
 			}
@@ -640,7 +656,7 @@ public class SandersNode extends Node {
 		switch (state) {
 		case MappingDistrict:
 			if (isDistrictMapped()) {
-				state = State.NotInCS;
+				changeState(State.NotInCS);
 			}
 			break;
 		case NotInCS:
@@ -650,7 +666,7 @@ public class SandersNode extends Node {
 			break;
 		case Waiting:
 			if (yesVotes >= district.size()) {
-				state = State.InCS;
+				changeState(State.InCS);
 			}
 			break;
 		case InCS:
