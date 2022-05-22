@@ -5,6 +5,12 @@
 This repository is dedicated to assignments given by professor [Markus Endler](https://www-di.inf.puc-rio.br/~endler/) in the Distributed Algorithms course ([INF2056](https://www-di.inf.puc-rio.br/~endler/courses/DA/index.html)) at the [Pontifical Catholic University of Rio de Janeiro](https://www.puc-rio.br/english/) during the 1st semester of 2022.
 Every assignment will consist of implementating some distributed algorithm on Sinalgo (see "Credits" section). I'll be using Sinalgo version 0.75.3 (which can be obtained on [this](https://sourceforge.net/projects/sinalgo/) Sourceforge page) simply because I could not manage to run the newer versions on Eclipse. :-)
 
+## Requirements
+
+* Eclipse IDE 2022-03
+* Java SE 1.5 (for compiling and running Java code)
+* Git LFS >= 3.1.4 (for downloading images)
+
 ## Setup
 
 Just open this folder in Eclipse. Everything should be configured already. If not, make sure that `binaries/bin` and `binaries/jdom.jar` are in the classpath and that you're using Java SE 1.5 (you can change that in `Project > Properties > Java Build Path > Libraries`).
