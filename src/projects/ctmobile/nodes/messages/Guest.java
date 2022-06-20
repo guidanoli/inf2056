@@ -1,5 +1,7 @@
 package projects.ctmobile.nodes.messages;
 
+import projects.ctmobile.nodes.nodeImplementations.MobileHost;
+import projects.ctmobile.nodes.nodeImplementations.MobileSupportStation;
 import sinalgo.nodes.messages.Message;
 
 /**
@@ -8,17 +10,17 @@ import sinalgo.nodes.messages.Message;
  */
 public class Guest extends Message {
 
-	public int h_k;
-	public int mss_j;
+	public MobileHost mh;
+	public MobileSupportStation oldMSS;
 	
-	public Guest(int h_k, int mss_j) {
-		this.h_k = h_k;
-		this.mss_j = mss_j;
+	public Guest(MobileHost mh, MobileSupportStation oldMSS) {
+		this.mh = mh;
+		this.oldMSS = oldMSS;
 	}
 	
 	@Override
 	public Message clone() {
-		return new Guest(h_k, mss_j);
+		return new Guest(mh, oldMSS);
 	}
 
 }

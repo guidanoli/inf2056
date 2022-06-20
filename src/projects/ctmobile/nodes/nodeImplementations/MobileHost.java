@@ -25,16 +25,7 @@ public class MobileHost extends Node {
 	private static Random random = Distribution.getRandom();
 	private static int maxValue;
 	private static double pStart;
-	
-	enum ApplicationState {
-		Idle,
-		RequestingConsensus,
-		AwaitingConsensus,
-		ReachedConsensus,
-	}
-	
-	private ApplicationState appState;
-	
+
 	{
 		try {
 			maxValue = Configuration.getIntegerParameter("ctmobile/MobileHost/maxValue");
@@ -44,7 +35,17 @@ public class MobileHost extends Node {
 		}
 	}
 	
-	// Current mobile support station
+	enum ApplicationState {
+		Idle,
+		RequestingConsensus,
+		AwaitingConsensus,
+		ReachedConsensus,
+	}
+	
+	// The state of the application that consumes the consensus middleware
+	private ApplicationState appState;
+	
+	// The mobile support station with whom this node communicates directly
 	private MobileSupportStation mss;
 	
 	// Value provided by the application program running on a mobile host
@@ -113,7 +114,7 @@ public class MobileHost extends Node {
 		}
 		if (mss != null && someMSS != null && mss != someMSS) {
 			// Hand-off procedure (1)
-			send(new Guest(ID, mss.ID), someMSS);
+			send(new Guest(this, mss), someMSS);
 		}
 		// update MSS
 		mss = someMSS;
