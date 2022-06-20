@@ -1,7 +1,6 @@
-This is the template project.
+This project attempts to implement the protocol proposed by Badache et al. [1] with the following simplifications:
 
-Copy this folder and rename it to start a new project. If this description
-appears for a project that is not the template description then the 
-description has not yet been written. Please describe the project in 
-the description.txt stored in the project root folder of this
-project.
+- We assume nodes can't fail, but MHs can get out of reach of MSSs.
+- Every MH needs to agree on the set of values 
+
+[1] Badache, N., Hurfin, M., & Macedo, R. (1999). Solving the consensus problem in a mobile environment. 1999 IEEE International Performance, Computing and Communications Conference (Cat. No.99CH36305), 29–35. https://doi.org/10.1109/PCCC.1999.749417

@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.util.Random;
 
 import projects.ctmobile.nodes.messages.Decide;
+import projects.ctmobile.nodes.messages.Guest;
 import projects.ctmobile.nodes.messages.Init1;
 import projects.ctmobile.nodes.messages.Init3;
 import projects.ctmobile.nodes.messages.Propose;
@@ -72,7 +73,22 @@ public class MobileHost extends Node {
 	}
 
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
-		this.setColor(Color.YELLOW);
+		Color color;
+		switch (appState) {
+		case RequestingConsensus:
+			color = Color.YELLOW;
+			break;
+		case AwaitingConsensus:
+			color = Color.ORANGE;
+			break;
+		case ReachedConsensus:
+			color = Color.GREEN;
+			break;
+		default:
+			color = Color.WHITE;
+			break;
+		}
+		this.setColor(color);
 		String text = Integer.toString(initialValue);
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 24, Color.BLACK);
 	}
@@ -95,8 +111,11 @@ public class MobileHost extends Node {
 				}
 			}
 		}
-		// if the MH is isolated, mss = null
-		// if some MSS is close enough, mss != null
+		if (mss != null && someMSS != null && mss != someMSS) {
+			// Hand-off procedure (1)
+			send(new Guest(ID, mss.ID), someMSS);
+		}
+		// update MSS
 		mss = someMSS;
 	}
 
