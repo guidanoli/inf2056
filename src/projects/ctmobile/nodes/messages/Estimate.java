@@ -17,11 +17,11 @@ import sinalgo.nodes.messages.Message;
  * (MSS_i,r,V_i',ts_i) E Log_c[r] and (MSS_i,r,V_i'',ts_i) E Log_c[r] such that card(V_i') <= card(V_i"),
  * then (MSS_i,r,V_i', ts_i) is removed from Log_c[r].
  */
-public class Estimate<T> extends Message {
+public class Estimate extends Message {
 
 	public int mss_j;
 	public int r;
-	public HashSet<T> v_j;
+	public HashSet<Integer> v_j;
 	public HashSet<Integer> p_j;
 	public int ts_j;
 	
@@ -34,17 +34,17 @@ public class Estimate<T> extends Message {
 	 * @param ts_j time stamp of estimation
 	 */
 	@SuppressWarnings("unchecked")
-	public Estimate(int mss_j, int r, HashSet<T> v_j, HashSet<Integer> p_j, int ts_j) {
+	public Estimate(int mss_j, int r, HashSet<Integer> v_j, HashSet<Integer> p_j, int ts_j) {
 		this.mss_j = mss_j;
 		this.r = r;
-		this.v_j = (HashSet<T>)v_j.clone();
+		this.v_j = (HashSet<Integer>)v_j.clone();
 		this.p_j = (HashSet<Integer>)p_j.clone();
 		this.ts_j = ts_j;
 	}
 	
 	@Override
 	public Message clone() {
-		return new Estimate<T>(mss_j, r, v_j, p_j, ts_j);
+		return new Estimate(mss_j, r, v_j, p_j, ts_j);
 	}
 
 }

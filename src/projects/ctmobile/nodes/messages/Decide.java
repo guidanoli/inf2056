@@ -12,18 +12,18 @@ import sinalgo.nodes.messages.Message;
  * that all correct processes decide, the message is also forwarded to the other base
  * stations (reliable broadcast). See the hand-off procedure and actions 14, 6 and 3.
  */
-public class Decide<T> extends Message {
+public class Decide extends Message {
 
-	public HashSet<T> v_j;
+	public HashSet<Integer> v_j;
 	
 	@SuppressWarnings("unchecked")
-	public Decide(HashSet<T> v_j) {
-		this.v_j = (HashSet<T>)v_j.clone();
+	public Decide(HashSet<Integer> v_j) {
+		this.v_j = (HashSet<Integer>)v_j.clone();
 	}
 	
 	@Override
 	public Message clone() {
-		return new Decide<T>(v_j);
+		return new Decide(v_j);
 	}
 
 }

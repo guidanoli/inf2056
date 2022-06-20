@@ -15,20 +15,19 @@ import sinalgo.nodes.messages.Message;
  * replies with a positive acknowledgment. Otherwise it replies with a negative acknowledgment
  * and next updates its sets New_V_i and Pi. See actions 11 and 12.
  */
-public class NewEstimate<T> extends Message {
+public class NewEstimate extends Message {
 
-	public Estimate<T> estimate;
+	public Estimate estimate;
 	public boolean endCollect_c;
 
-	@SuppressWarnings("unchecked")
-	public NewEstimate(Estimate<T> estimate, boolean endCollect_c) {
-		this.estimate = (Estimate<T>)estimate.clone();
+	public NewEstimate(Estimate estimate, boolean endCollect_c) {
+		this.estimate = (Estimate)estimate.clone();
 		this.endCollect_c = endCollect_c;
 	}
 	
 	@Override
 	public Message clone() {
-		return new NewEstimate<T>(estimate, endCollect_c);
+		return new NewEstimate(estimate, endCollect_c);
 	}
 
 }

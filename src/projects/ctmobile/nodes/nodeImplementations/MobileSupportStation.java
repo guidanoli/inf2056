@@ -1,11 +1,14 @@
 package projects.ctmobile.nodes.nodeImplementations;
 
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
 import projects.ctmobile.nodes.messages.Estimate;
 import sinalgo.configuration.WrongConfigurationException;
+import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
 
@@ -48,7 +51,7 @@ public class MobileSupportStation extends Node {
 	HashSet<Integer> v;
 	
 	// Set containing the estimates received by the coordinator MSS_i during the round r.
-	HashMap<Integer, HashSet<Estimate<Integer>>> log;
+	HashMap<Integer, HashSet<Estimate>> log;
 	
 	// Number of positive acknowledgments received by the coordinator MSS_i during round r.
 	HashMap<Integer, Integer> nPositive;
@@ -82,8 +85,8 @@ public class MobileSupportStation extends Node {
 		p = new HashSet<Integer>();
 		newV = new HashSet<Integer>();
 		v = new HashSet<Integer>();
-		log = new HashMap<Integer, HashSet<Estimate<Integer>>>();
-		log.put(r, new HashSet<Estimate<Integer>>());
+		log = new HashMap<Integer, HashSet<Estimate>>();
+		log.put(r, new HashSet<Estimate>());
 		nPositive = new HashMap<Integer, Integer>();
 		nPositive.put(r, 0);
 		nNegative = new HashMap<Integer, Integer>();
@@ -98,6 +101,12 @@ public class MobileSupportStation extends Node {
 	public void postStep() {
 		// TODO Auto-generated method stub
 
+	}
+	
+	@Override
+	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
+		this.setColor(Color.getHSBColor(.33f, 1.f, .39f));
+		this.drawNodeAsSquareWithText(g, pt, highlight, "", 24, Color.WHITE);
 	}
 
 	@Override

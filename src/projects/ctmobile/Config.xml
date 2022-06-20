@@ -195,6 +195,10 @@
 			<WaitingTime distribution="Poisson" lambda="10" />
 		</RandomWayPoint>
 		
+		<CTMobile>
+			<MobileHost maxValue="100" pStart="0.1"/>
+		</CTMobile>
+		
 		<RandomDirection>
 			<NodeSpeed distribution="Gaussian" mean="10" variance="20" />
 			<WaitingTime distribution="Poisson" lambda="10" />
