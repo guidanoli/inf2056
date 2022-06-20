@@ -9,16 +9,16 @@ import sinalgo.nodes.messages.Message;
 public class Guest extends Message {
 
 	public int h_k;
-	public int MSS_j;
+	public int mss_j;
 	
-	public Guest(int h_k, int MSS_j) {
+	public Guest(int h_k, int mss_j) {
 		this.h_k = h_k;
-		this.MSS_j = MSS_j;
+		this.mss_j = mss_j;
 	}
 	
 	@Override
 	public Message clone() {
-		return new Guest(h_k, MSS_j);
+		return new Guest(h_k, mss_j);
 	}
 
 }

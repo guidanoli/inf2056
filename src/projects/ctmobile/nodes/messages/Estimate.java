@@ -19,32 +19,32 @@ import sinalgo.nodes.messages.Message;
  */
 public class Estimate<T> extends Message {
 
-	public int MSS_j;
+	public int mss_j;
 	public int r;
-	public HashSet<T> V_j;
-	public HashSet<Integer> P_j;
+	public HashSet<T> v_j;
+	public HashSet<Integer> p_j;
 	public int ts_j;
 	
 	/**
 	 * 
-	 * @param MSS_j id of base station proposing estimate
+	 * @param mss_j id of base station proposing estimate
 	 * @param r round in which MSS_j is in
-	 * @param V_j set of values
-	 * @param P_j set of mobile workers that have proposed
+	 * @param v_j set of values
+	 * @param p_j set of mobile workers that have proposed
 	 * @param ts_j time stamp of estimation
 	 */
 	@SuppressWarnings("unchecked")
-	public Estimate(int MSS_j, int r, HashSet<T> V_j, HashSet<Integer> P_j, int ts_j) {
-		this.MSS_j = MSS_j;
+	public Estimate(int mss_j, int r, HashSet<T> v_j, HashSet<Integer> p_j, int ts_j) {
+		this.mss_j = mss_j;
 		this.r = r;
-		this.V_j = (HashSet<T>)V_j.clone();
-		this.P_j = (HashSet<Integer>)P_j.clone();
+		this.v_j = (HashSet<T>)v_j.clone();
+		this.p_j = (HashSet<Integer>)p_j.clone();
 		this.ts_j = ts_j;
 	}
 	
 	@Override
 	public Message clone() {
-		return new Estimate<T>(MSS_j, r, V_j, P_j, ts_j);
+		return new Estimate<T>(mss_j, r, v_j, p_j, ts_j);
 	}
 
 }

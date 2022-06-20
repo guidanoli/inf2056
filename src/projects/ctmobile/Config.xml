@@ -26,7 +26,7 @@
 		<mobility value="true" />
 
 		<!--If set to true, the chosen interference model is called at the end of every round to test for interferring packets. To increase performance, set this flag to FALSE if you do not consider interference.-->
-		<interference value="true" />
+		<interference value="false" />
 
 		<!--Set this flag to true if interference only decreases if  less messages are being sent and increases if more messages are being sent. This flag enables considerable optimizations. -->
 		<interferenceIsAdditive value="true" />
@@ -116,7 +116,7 @@
 		<DefaultMessageTransmissionModel value="ConstantTime" />
 
 		<!--Default connectivity model used when none is specified-->
-		<DefaultConnectivityModel value="UDG" />
+		<DefaultConnectivityModel value="ctmobile:WirelessConnectivityModel" />
 
 		<!--Default distribution model used when none is specified-->
 		<DefaultDistributionModel value="Random" />
@@ -125,13 +125,13 @@
 		<DefaultInterferenceModel value="NoInterference" />
 
 		<!--Default mobility model used when none is specified-->
-		<DefaultMobilityModel value="NoMobility" />
+		<DefaultMobilityModel value="RandomDirection" />
 
 		<!--Default reliability model used when none is specified-->
 		<DefaultReliabilityModel value="ReliableDelivery" />
 
 		<!--Default node implementation used when none is specified-->
-		<DefaultNodeImplementation value="DummyNode" />
+		<DefaultNodeImplementation value="ctmobile:MobileSupportStation" />
 
 		<!--***********************************************************************-->
 		<!--  Node storage, position transformation                                -->
@@ -152,7 +152,7 @@
 		<!--  Diverse Settings                                                     -->
 		<!--***********************************************************************-->
 		<!--Show hints on how to further optimize the simulation when some parameters seem not to be set optimally.-->
-		<showOptimizationHints value="true" />
+		<showOptimizationHints value="false" />
 
 		<!--Indicates whether the edges are drawn in the default draw implementation for the graph.-->
 		<drawEdges value="true" />
@@ -163,10 +163,10 @@
 		<!--The number of future events that are shown in the control panel-->
 		<shownEventQueueSize value="10" />
 
-		<!--The length of the arrows. This length is multiplied by the actualzoomLevel.-->
+		<!--The length of the arrows. This length is multiplied by the current zoomLevel.-->
 		<arrowLength value="8" />
 
-		<!--The width of the arrows. This width is multiplied by the actualzoomLevel.-->
+		<!--The width of the arrows. This width is multiplied by the current zoomLevel.-->
 		<arrowWidth value="1" />
 
 		<!--The dsfault value of the rounds field.-->

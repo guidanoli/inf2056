@@ -7,17 +7,17 @@ import sinalgo.nodes.messages.Message;
  */
 public class NA extends Message {
 
-	public int MSS_j;
+	public int mss_j;
 	public int r_j;
 	
-	public NA(int MSS_j, int r_j) {
-		this.MSS_j = MSS_j;
+	public NA(int mss_j, int r_j) {
+		this.mss_j = mss_j;
 		this.r_j = r_j;
 	}
 	
 	@Override
 	public Message clone() {
-		return new NA(MSS_j, r_j);
+		return new NA(mss_j, r_j);
 	}
 
 }

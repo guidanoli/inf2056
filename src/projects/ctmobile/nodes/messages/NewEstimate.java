@@ -1,7 +1,5 @@
 package projects.ctmobile.nodes.messages;
 
-import java.util.HashSet;
-
 import sinalgo.nodes.messages.Message;
 
 /**
@@ -19,24 +17,18 @@ import sinalgo.nodes.messages.Message;
  */
 public class NewEstimate<T> extends Message {
 
-	public int MSS_c;
-	public int r_i;
-	public HashSet<T> V_c;
-	public HashSet<Integer> P_c;
+	public Estimate<T> estimate;
 	public boolean endCollect_c;
-	
+
 	@SuppressWarnings("unchecked")
-	public NewEstimate(int MSS_c, int r_i, HashSet<T> V_c, HashSet<Integer> P_c, boolean endCollect_c) {
-		this.MSS_c = MSS_c;
-		this.r_i = r_i;
-		this.V_c = (HashSet<T>)V_c.clone();
-		this.P_c = (HashSet<Integer>)P_c.clone();
+	public NewEstimate(Estimate<T> estimate, boolean endCollect_c) {
+		this.estimate = (Estimate<T>)estimate.clone();
 		this.endCollect_c = endCollect_c;
 	}
 	
 	@Override
 	public Message clone() {
-		return new NewEstimate<T>(MSS_c, r_i, V_c, P_c, endCollect_c);
+		return new NewEstimate<T>(estimate, endCollect_c);
 	}
 
 }
