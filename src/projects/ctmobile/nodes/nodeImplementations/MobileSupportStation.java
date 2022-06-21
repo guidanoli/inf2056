@@ -6,11 +6,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+import projects.ctmobile.nodes.messages.BeginHandoff;
+import projects.ctmobile.nodes.messages.Decide;
 import projects.ctmobile.nodes.messages.Estimate;
+import projects.ctmobile.nodes.messages.Guest;
+import projects.ctmobile.nodes.messages.Init3;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
+import sinalgo.nodes.messages.Message;
 
 public class MobileSupportStation extends Node {
 
@@ -42,7 +47,7 @@ public class MobileSupportStation extends Node {
 	
 	// Set containing the identities of the mobile hosts whose initial values are already known by MSS_i.
 	// MSS_i collects values of the mobile hosts located in its cell until endCollect = true.
-	HashSet<Integer> p;
+	HashSet<MobileHost> p;
 	
 	// Set containing the collected values.
 	HashSet<Integer> newV;
@@ -64,14 +69,41 @@ public class MobileSupportStation extends Node {
 	
 	@Override
 	public void handleMessages(Inbox inbox) {
-		// TODO Auto-generated method stub
+		for (Message msg : inbox) {
+			if (msg instanceof Guest) {
+				handleGuestMessage((Guest)msg);
+			} else if (msg instanceof BeginHandoff) {
+				handleBeginHandoffMessage((BeginHandoff)msg);
+			}
+		}
+	}
+	
+	private void handleBeginHandoffMessage(BeginHandoff msg) {
+		localMHs.remove(msg.mh);
+	}
 
+	private void handleGuestMessage(Guest msg) {
+		localMHs.add(msg.mh);
+		if (msg.oldMSS != null) {
+			sendDirect(new BeginHandoff(msg.mh, this), msg.oldMSS);
+		}
+		if (phase != 0 && !p.contains(msg.mh) && !endCollect) {
+			send(new Init3(), msg.mh);
+		}
+		if (phase == 0 && state == State.Decided) {
+			send(new Decide(v), msg.mh);
+		}
 	}
 
 	@Override
 	public void preStep() {
 		// TODO Auto-generated method stub
 
+	}
+	
+	@Override
+	public String toString() {
+		return "MH = " + localMHs.toString();
 	}
 
 	@Override
@@ -82,7 +114,7 @@ public class MobileSupportStation extends Node {
 		phase = 0;
 		state = State.Undecided;
 		ts = 0;
-		p = new HashSet<Integer>();
+		p = new HashSet<MobileHost>();
 		newV = new HashSet<Integer>();
 		v = new HashSet<Integer>();
 		log = new HashMap<Integer, HashSet<Estimate>>();

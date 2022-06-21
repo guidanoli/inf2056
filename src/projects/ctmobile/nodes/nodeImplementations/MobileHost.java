@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.Random;
 
+import projects.ctmobile.LogL;
 import projects.ctmobile.nodes.messages.Decide;
 import projects.ctmobile.nodes.messages.Guest;
 import projects.ctmobile.nodes.messages.Init1;
@@ -18,6 +19,7 @@ import sinalgo.nodes.edges.Edge;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 import sinalgo.runtime.Main;
+import sinalgo.tools.logging.Logging;
 import sinalgo.tools.statistics.Distribution;
 
 public class MobileHost extends Node {
@@ -51,16 +53,20 @@ public class MobileHost extends Node {
 	// Value provided by the application program running on a mobile host
 	private int initialValue;
 	
+	private Logging log = Logging.getLogger("mh.log");
+	
 	@Override
 	public void handleMessages(Inbox inbox) {
 		for (Message msg : inbox) {
-			Node sender = inbox.getSender();
 			if (msg instanceof Init3) {
 				// Action 2
+				Node sender = inbox.getSender();
 				send(new Propose(ID, initialValue), sender);
+				log.logln(LogL.MOBILE_HOST, ID + " received Init3, sending Propose to " + sender.ID);
 			} else if (msg instanceof Decide) {
 				// Action 3
 				appState = ApplicationState.ReachedConsensus;
+				log.logln(LogL.MOBILE_HOST, ID + " received Decide");
 			}
 		}
 	}
@@ -70,6 +76,7 @@ public class MobileHost extends Node {
 		// application may randomly request consensus to start
 		if (appState == ApplicationState.Idle && random.nextDouble() < pStart) {
 			appState = ApplicationState.RequestingConsensus;
+			log.logln(LogL.MOBILE_HOST, ID + " requests consensus");
 		}
 	}
 
@@ -90,7 +97,7 @@ public class MobileHost extends Node {
 			break;
 		}
 		this.setColor(color);
-		String text = Integer.toString(initialValue);
+		String text = Integer.toString(ID);
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 24, Color.BLACK);
 	}
 	
@@ -98,6 +105,7 @@ public class MobileHost extends Node {
 	public void init() {
 		initialValue = random.nextInt(maxValue);
 		appState = ApplicationState.Idle;
+		log.logln(LogL.MOBILE_HOST, ID + " initialized with " + initialValue);
 	}
 
 	@Override
@@ -108,16 +116,26 @@ public class MobileHost extends Node {
 			if (node instanceof MobileSupportStation) {
 				someMSS = (MobileSupportStation)node;
 				if (mss != null && mss == someMSS) {
-					break; // still connected to current MSS
+					// the MH is connected to some MSS (not null)
+					// and is still connected to it.
+					return;
 				}
 			}
 		}
-		if (mss != null && someMSS != null && mss != someMSS) {
+		// Either the MH is not assigned to a MSS,
+		// or the MH got too far from its current MSS.
+		// So we check if there is an alternative MSS...
+		if (someMSS != null) {
 			// Hand-off procedure (1)
+			log.logln(LogL.MOBILE_HOST, ID + " sends Guest to MSS " + someMSS.ID);
 			send(new Guest(this, mss), someMSS);
+			mss = someMSS;
 		}
-		// update MSS
-		mss = someMSS;
+	}
+	
+	@Override
+	public String toString() {
+		return Integer.toString(ID);
 	}
 
 	@Override

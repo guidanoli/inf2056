@@ -1,5 +1,7 @@
 package projects.ctmobile.nodes.messages;
 
+import projects.ctmobile.nodes.nodeImplementations.MobileHost;
+import projects.ctmobile.nodes.nodeImplementations.MobileSupportStation;
 import sinalgo.nodes.messages.Message;
 
 /**
@@ -8,17 +10,17 @@ import sinalgo.nodes.messages.Message;
  */
 public class BeginHandoff extends Message {
 
-	public int h_k;
-	public int mss_j;
+	public MobileHost mh;
+	public MobileSupportStation newMSS;
 	
-	public BeginHandoff(int h_k, int mss_j) {
-		this.h_k = h_k;
-		this.mss_j = mss_j;
+	public BeginHandoff(MobileHost mh, MobileSupportStation newMSS) {
+		this.mh = mh;
+		this.newMSS = newMSS;
 	}
 	
 	@Override
 	public Message clone() {
-		return new BeginHandoff(h_k, mss_j);
+		return new BeginHandoff(mh, newMSS);
 	}
 
 }
