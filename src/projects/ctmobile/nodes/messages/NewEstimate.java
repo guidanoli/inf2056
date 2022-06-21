@@ -30,4 +30,14 @@ public class NewEstimate extends Message {
 		return new NewEstimate(estimate, endCollect_c);
 	}
 
+	@Override
+	public String toString() {
+		return "NEW_ESTIMATE(" +
+				estimate.mss_j + ", " +
+				estimate.r + ", " +
+				estimate.v_j + ", " +
+				estimate.p_j + ", " +
+				estimate.ts_j + ", " +
+				endCollect_c + ")";
+	}
 }

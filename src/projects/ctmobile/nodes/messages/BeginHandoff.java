@@ -22,5 +22,10 @@ public class BeginHandoff extends Message {
 	public Message clone() {
 		return new BeginHandoff(mh, newMSS);
 	}
+	
+	@Override
+	public String toString() {
+		return "BEGIN_HANDOFF(" + mh + ", " + newMSS + ")";
+	}
 
 }

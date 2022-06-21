@@ -47,4 +47,8 @@ public class Estimate extends Message {
 		return new Estimate(mss_j, r, v_j, p_j, ts_j);
 	}
 
+	@Override
+	public String toString() {
+		return "ESTIMATE(" + mss_j + ", " + r + ", " + v_j + ", " + p_j + ", " + ts_j + ")";
+	}
 }

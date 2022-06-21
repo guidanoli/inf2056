@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+import projects.ctmobile.LogL;
 import projects.ctmobile.nodes.messages.BeginHandoff;
 import projects.ctmobile.nodes.messages.Decide;
 import projects.ctmobile.nodes.messages.Estimate;
@@ -16,6 +17,7 @@ import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
+import sinalgo.tools.logging.Logging;
 
 public class MobileSupportStation extends Node {
 
@@ -67,15 +69,23 @@ public class MobileSupportStation extends Node {
 	// If MSS_i should stop collecting proposals from mobile hosts
 	boolean endCollect;
 	
+	private Logging logger = Logging.getLogger("ctmobile.log");
+	
 	@Override
 	public void handleMessages(Inbox inbox) {
 		for (Message msg : inbox) {
+			logger.logln(LogL.MSS, this + " received " + msg);
 			if (msg instanceof Guest) {
 				handleGuestMessage((Guest)msg);
 			} else if (msg instanceof BeginHandoff) {
 				handleBeginHandoffMessage((BeginHandoff)msg);
 			}
 		}
+	}
+
+	public void loggedSend(Message m, Node target) {
+		send(m, target);
+		logger.logln(LogL.MSS, this + " sent " + m + " to " + target);
 	}
 	
 	private void handleBeginHandoffMessage(BeginHandoff msg) {
@@ -88,10 +98,10 @@ public class MobileSupportStation extends Node {
 			sendDirect(new BeginHandoff(msg.mh, this), msg.oldMSS);
 		}
 		if (phase != 0 && !p.contains(msg.mh) && !endCollect) {
-			send(new Init3(), msg.mh);
+			loggedSend(new Init3(), msg.mh);
 		}
 		if (phase == 0 && state == State.Decided) {
-			send(new Decide(v), msg.mh);
+			loggedSend(new Decide(v), msg.mh);
 		}
 	}
 
@@ -101,9 +111,13 @@ public class MobileSupportStation extends Node {
 
 	}
 	
+	public int getIndex() {
+		return allMSSs.indexOf(this) + 1;
+	}
+	
 	@Override
 	public String toString() {
-		return "MH = " + localMHs.toString();
+		return "MSS_" + getIndex();
 	}
 
 	@Override
@@ -138,7 +152,8 @@ public class MobileSupportStation extends Node {
 	@Override
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		this.setColor(Color.getHSBColor(.33f, 1.f, .39f));
-		this.drawNodeAsSquareWithText(g, pt, highlight, "", 24, Color.WHITE);
+		String text = Integer.toString(getIndex());
+		this.drawNodeAsSquareWithText(g, pt, highlight, text, 24, Color.WHITE);
 	}
 
 	@Override

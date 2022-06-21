@@ -26,4 +26,8 @@ public class Decide extends Message {
 		return new Decide(v_j);
 	}
 
+	@Override
+	public String toString() {
+		return "DECIDE(" + v_j + ")";
+	}
 }

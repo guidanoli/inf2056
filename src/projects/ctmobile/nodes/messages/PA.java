@@ -23,4 +23,8 @@ public class PA extends Message {
 		return new PA(mss_j, r_j);
 	}
 
+	@Override
+	public String toString() {
+		return "PA(" + mss_j + ", " + r_j + ")";
+	}
 }

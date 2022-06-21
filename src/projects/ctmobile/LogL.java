@@ -41,10 +41,12 @@ package projects.ctmobile;
  * in the log-file. The levels below (with a higher enumeration value) not.
  */
 public class LogL extends sinalgo.tools.logging.LogL{
-	/**
-	 * 
-	 */
-	public static final boolean MOBILE_HOST = true;
+	
+	// Mobile host events
+	public static final boolean MH = false;
+
+	// Mobile support station events
+	public static final boolean MSS = false;
 }
 
 

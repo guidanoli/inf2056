@@ -20,4 +20,8 @@ public class NA extends Message {
 		return new NA(mss_j, r_j);
 	}
 
+	@Override
+	public String toString() {
+		return "NA(" + mss_j + ", " + r_j + ")";
+	}
 }

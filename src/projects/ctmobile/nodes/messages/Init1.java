@@ -10,4 +10,8 @@ public class Init1 extends Message {
 		return new Init1();
 	}
 
+	@Override
+	public String toString() {
+		return "INIT_1";
+	}
 }

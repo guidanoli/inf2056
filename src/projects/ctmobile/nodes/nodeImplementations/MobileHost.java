@@ -3,6 +3,7 @@ package projects.ctmobile.nodes.nodeImplementations;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.Random;
+import java.util.Vector;
 
 import projects.ctmobile.LogL;
 import projects.ctmobile.nodes.messages.Decide;
@@ -24,6 +25,9 @@ import sinalgo.tools.statistics.Distribution;
 
 public class MobileHost extends Node {
 
+	// all mobile host nodes
+	private static Vector<MobileHost> allMHs = new Vector<MobileHost>();
+	
 	private static Random random = Distribution.getRandom();
 	private static int maxValue;
 	private static double pStart;
@@ -53,30 +57,42 @@ public class MobileHost extends Node {
 	// Value provided by the application program running on a mobile host
 	private int initialValue;
 	
-	private Logging log = Logging.getLogger("mh.log");
+	private Logging logger = Logging.getLogger("ctmobile.log");
 	
 	@Override
 	public void handleMessages(Inbox inbox) {
 		for (Message msg : inbox) {
+			logger.logln(LogL.MH, this + " received " + msg);
 			if (msg instanceof Init3) {
 				// Action 2
 				Node sender = inbox.getSender();
-				send(new Propose(ID, initialValue), sender);
-				log.logln(LogL.MOBILE_HOST, ID + " received Init3, sending Propose to " + sender.ID);
+				loggedSend(new Propose(this, initialValue), sender);
 			} else if (msg instanceof Decide) {
 				// Action 3
 				appState = ApplicationState.ReachedConsensus;
-				log.logln(LogL.MOBILE_HOST, ID + " received Decide");
 			}
 		}
 	}
 
+	public void loggedSend(Message m, Node target) {
+		send(m, target);
+		logger.logln(LogL.MH, this + " sent " + m + " to " + target);
+	}
+	
+	public int getIndex() {
+		return allMHs.indexOf(this) + 1;
+	}
+	
+	@Override
+	public String toString() {
+		return "MH_" + getIndex();
+	}
+	
 	@Override
 	public void preStep() {
 		// application may randomly request consensus to start
 		if (appState == ApplicationState.Idle && random.nextDouble() < pStart) {
 			appState = ApplicationState.RequestingConsensus;
-			log.logln(LogL.MOBILE_HOST, ID + " requests consensus");
 		}
 	}
 
@@ -97,15 +113,15 @@ public class MobileHost extends Node {
 			break;
 		}
 		this.setColor(color);
-		String text = Integer.toString(ID);
+		String text = Integer.toString(getIndex());
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 24, Color.BLACK);
 	}
 	
 	@Override
 	public void init() {
+		allMHs.add(this);
 		initialValue = random.nextInt(maxValue);
 		appState = ApplicationState.Idle;
-		log.logln(LogL.MOBILE_HOST, ID + " initialized with " + initialValue);
 	}
 
 	@Override
@@ -115,34 +131,27 @@ public class MobileHost extends Node {
 			Node node = e.endNode;
 			if (node instanceof MobileSupportStation) {
 				someMSS = (MobileSupportStation)node;
-				if (mss != null && mss == someMSS) {
-					// the MH is connected to some MSS (not null)
-					// and is still connected to it.
+				assert(someMSS != null);
+				if (mss == someMSS) {
+					// the MH is still connected to its MSS
 					return;
 				}
 			}
 		}
-		// Either the MH is not assigned to a MSS,
-		// or the MH got too far from its current MSS.
-		// So we check if there is an alternative MSS...
+		// the MH is not connected to a MSS
+		// So we check if there is some other MSS
 		if (someMSS != null) {
 			// Hand-off procedure (1)
-			log.logln(LogL.MOBILE_HOST, ID + " sends Guest to MSS " + someMSS.ID);
-			send(new Guest(this, mss), someMSS);
+			loggedSend(new Guest(this, mss), someMSS);
 			mss = someMSS;
 		}
 	}
 	
 	@Override
-	public String toString() {
-		return Integer.toString(ID);
-	}
-
-	@Override
 	public void postStep() {
 		if (appState == ApplicationState.RequestingConsensus && mss != null) {
 			// Action 1
-			send(new Init1(), mss);
+			loggedSend(new Init1(), mss);
 			appState = ApplicationState.AwaitingConsensus;
 		}
 	}

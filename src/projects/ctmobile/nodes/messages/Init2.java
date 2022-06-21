@@ -15,4 +15,8 @@ public class Init2 extends Message {
 		return new Init2();
 	}
 
+	@Override
+	public String toString() {
+		return "INIT_2";
+	}
 }

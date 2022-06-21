@@ -22,5 +22,9 @@ public class Guest extends Message {
 	public Message clone() {
 		return new Guest(mh, oldMSS);
 	}
-
+	
+	@Override
+	public String toString() {
+		return "GUEST(" + mh + ", " + oldMSS + ")";
+	}
 }

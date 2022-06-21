@@ -1,5 +1,6 @@
 package projects.ctmobile.nodes.messages;
 
+import projects.ctmobile.nodes.nodeImplementations.MobileHost;
 import sinalgo.nodes.messages.Message;
 
 // Such a message carries the value proposed by a mobile host
@@ -11,21 +12,25 @@ import sinalgo.nodes.messages.Message;
 // discussed in this paper.
 public class Propose extends Message {
 
-	public int h_k;
-	public int v_k;
+	public MobileHost mh;
+	public int v;
 	
 	/**
-	 * @param h_k mobile host id
+	 * @param mh mobile host
 	 * @param v_k proposed value
 	 */
-	public Propose(int h_k, int v_k) {
-		this.h_k = h_k;
-		this.v_k = v_k;
+	public Propose(MobileHost mh, int v_k) {
+		this.mh = mh;
+		this.v = v_k;
 	}
 	
 	@Override
 	public Message clone() {
-		return new Propose(h_k, v_k);
+		return new Propose(mh, v);
 	}
 
+	@Override
+	public String toString() {
+		return "PROPOSE(" + mh + ", " + v + ")";
+	}
 }

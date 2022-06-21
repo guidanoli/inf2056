@@ -13,4 +13,8 @@ public class Init3 extends Message {
 		return new Init3();
 	}
 
+	@Override
+	public String toString() {
+		return "INIT_3";
+	}
 }
