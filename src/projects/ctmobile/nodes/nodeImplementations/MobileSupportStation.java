@@ -87,15 +87,27 @@ public class MobileSupportStation extends Node {
 		send(m, target);
 		logger.logln(LogL.MSS, this + " sent " + m + " to " + target);
 	}
+
+	public void loggedSendDirect(Message m, Node target) {
+		sendDirect(m, target);
+		logger.logln(LogL.MSS, this + " sent " + m + " directly to " + target);
+	}
 	
 	private void handleBeginHandoffMessage(BeginHandoff msg) {
+		// Hand-off procedure (3)
+		logger.logln(LogL.HANDOFF, this + " removed " + msg.mh + " from its local mobile host set");
 		localMHs.remove(msg.mh);
+		logger.logln(LogL.HANDOFF, this + ".localMHs = " + localMHs);
 	}
 
 	private void handleGuestMessage(Guest msg) {
+		// Hand-off procedure (2)
+		logger.logln(LogL.HANDOFF, this + " added " + msg.mh + " to its local mobile host set");
 		localMHs.add(msg.mh);
+		logger.logln(LogL.HANDOFF, this + ".localMHs = " + localMHs);
+		
 		if (msg.oldMSS != null) {
-			sendDirect(new BeginHandoff(msg.mh, this), msg.oldMSS);
+			loggedSendDirect(new BeginHandoff(msg.mh, this), msg.oldMSS);
 		}
 		if (phase != 0 && !p.contains(msg.mh) && !endCollect) {
 			loggedSend(new Init3(), msg.mh);

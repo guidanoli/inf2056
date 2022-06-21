@@ -43,10 +43,13 @@ package projects.ctmobile;
 public class LogL extends sinalgo.tools.logging.LogL{
 	
 	// Mobile host events
-	public static final boolean MH = false;
+	public static final boolean MH = true;
 
 	// Mobile support station events
-	public static final boolean MSS = false;
+	public static final boolean MSS = true;
+	
+	// Hand-off procedure details
+	public static final boolean HANDOFF = false;
 }
 
 

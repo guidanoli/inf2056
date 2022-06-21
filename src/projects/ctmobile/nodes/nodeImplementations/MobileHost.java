@@ -143,6 +143,7 @@ public class MobileHost extends Node {
 		if (someMSS != null) {
 			// Hand-off procedure (1)
 			loggedSend(new Guest(this, mss), someMSS);
+			logger.logln(LogL.HANDOFF, this + " now talks to " + someMSS);
 			mss = someMSS;
 		}
 	}
