@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sinalgo>
-	<ProjectSelector windowWidth="800" windowHeight="600" lastChosenProject="sanders" windowPosX="1952" windowPosY="236" isMaximized="false" selectedTab="1" />
-	<GUI windowWidth="924" windowHeight="1080" windowPosX="72" windowPosY="0" isMaximized="false" ControlPanelExpandSimulation="true" ControlPanelShowFullViewPanel="false" ControlPanelShowTextPanel="true" ControlPanelShowProjectControl="true" RunOperationIsLimited="true" helpWindowWidth="500" helpWindowHeight="500" helpWindowPosX="200" helpWindowPosY="200" helpWindowIsMaximized="false" />
-	<RandomSeed seedFromPreviousRun="-1693322836859412151" />
-	<App lastSelectedFileDirectory="/home/guilherme/Repos/guidanoli/inf2056/" checkForUpdatesAtStartup="false" updateCheckTimeStamp="0" runCmdLineArgs="" />
-	<GenNodesDlg numNodes="64" />
+	<ProjectSelector windowWidth="993" windowHeight="661" lastChosenProject="sample3" windowPosX="2422" windowPosY="167" isMaximized="false" selectedTab="1" />
+	<GUI windowWidth="780" windowHeight="614" windowPosX="1920" windowPosY="27" isMaximized="true" ControlPanelExpandSimulation="true" ControlPanelShowFullViewPanel="true" ControlPanelShowTextPanel="true" ControlPanelShowProjectControl="true" RunOperationIsLimited="false" helpWindowWidth="500" helpWindowHeight="500" helpWindowPosX="200" helpWindowPosY="200" helpWindowIsMaximized="false" />
+	<RandomSeed seedFromPreviousRun="-3631876414337281056" />
+	<App lastSelectedFileDirectory="" checkForUpdatesAtStartup="false" updateCheckTimeStamp="1655747158289" runCmdLineArgs="-project ctmobile -gen 1 ctmobile:MobileHost Random RandomDirection -gen 2 ctmobile:MobileSupportStation Grid2D NoMobility " />
+	<GenNodesDlg numNodes="20" />
 </sinalgo>
 
