@@ -14,20 +14,20 @@ import sinalgo.nodes.messages.Message;
  */
 public class Decide extends Message {
 
-	public HashSet<Integer> v_j;
+	public HashSet<Integer> v;
 	
 	@SuppressWarnings("unchecked")
-	public Decide(HashSet<Integer> v_j) {
-		this.v_j = (HashSet<Integer>)v_j.clone();
+	public Decide(HashSet<Integer> v) {
+		this.v = (HashSet<Integer>)v.clone();
 	}
 	
 	@Override
 	public Message clone() {
-		return new Decide(v_j);
+		return new Decide(v);
 	}
 
 	@Override
 	public String toString() {
-		return "DECIDE(" + v_j + ")";
+		return "DECIDE(" + v + ")";
 	}
 }

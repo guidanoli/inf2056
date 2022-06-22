@@ -2,6 +2,7 @@ package projects.ctmobile.nodes.nodeImplementations;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
@@ -14,6 +15,7 @@ import projects.ctmobile.nodes.messages.Guest;
 import projects.ctmobile.nodes.messages.Init1;
 import projects.ctmobile.nodes.messages.Init2;
 import projects.ctmobile.nodes.messages.Init3;
+import projects.ctmobile.nodes.messages.Propose;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
@@ -78,16 +80,28 @@ public class MobileSupportStation extends Node {
 	
 	// If MSS_i should stop collecting proposals from mobile hosts
 	private boolean endCollect;
+
+	// Inbox for messages sent this node to itself
+	private ArrayList<Message> myInbox;
 	
+	// Outbox for messages sent this node by itself
+	private ArrayList<Message> myOutbox;
+	
+	// Logger for logging events
 	private Logging logger = Logging.getLogger("ctmobile.log");
 
 	public void loggedSend(Message m, Node target) {
+		assert(target != this);
 		send(m, target);
 		logger.logln(LogL.MSS, this + " sent " + m + " to " + target);
 	}
 
 	public void loggedSendDirect(Message m, Node target) {
-		sendDirect(m, target);
+		if (target == this) {
+			myOutbox.add(m);
+		} else {
+			sendDirect(m, target);
+		}
 		logger.logln(LogL.MSS, this + " sent " + m + " directly to " + target);
 	}
 	
@@ -107,6 +121,15 @@ public class MobileSupportStation extends Node {
 		}
 	}
 	
+	public void loggedSendToMSSc(Message msg) {
+		loggedSendDirect(msg, getMSSc());
+	}
+	
+	public MobileSupportStation getMSSc() {
+		int c = r % allMSSs.size();
+		return allMSSs.elementAt(c);
+	}
+	
 	public void loggedPhaseChange(int newPhase) {
 		logger.logln(LogL.MSS_PHASES, this + " changed phase: " + phase + " -> " + newPhase);
 		phase = newPhase;
@@ -114,19 +137,61 @@ public class MobileSupportStation extends Node {
 	
 	@Override
 	public void handleMessages(Inbox inbox) {
+		// messages from other nodes
 		for (Message msg : inbox) {
 			logger.logln(LogL.MSS, this + " received " + msg);
-			if (msg instanceof Guest) {
-				handleGuestMessage((Guest)msg);
-			} else if (msg instanceof BeginHandoff) {
-				handleBeginHandoffMessage((BeginHandoff)msg);
-			} else if (msg instanceof Init1 || msg instanceof Init2) {
-				handleInit1OrInit2();
+			handleMessage(msg);
+		}
+		
+		// messages from itself
+		for (Message msg : myInbox) {
+			logger.logln(LogL.MSS, this + " received " + msg);
+			handleMessage(msg);
+		}
+	}
+	
+	private void handleMessage(Message msg) {
+		if (msg instanceof Guest) {
+			handleGuestMessage((Guest)msg);
+		} else if (msg instanceof BeginHandoff) {
+			handleBeginHandoffMessage((BeginHandoff)msg);
+		} else if (msg instanceof Init1 || msg instanceof Init2) {
+			handleInit1AndInit2Messages();
+		} else if (msg instanceof Propose) {
+			handleProposeMessage((Propose)msg);
+		}
+	}
+
+	private boolean canEndCollection() {
+		return p.size() == MobileHost.getNumberOfInstances();
+	}
+
+	public void loggedEndCollectChange(boolean newValue) {
+		logger.logln(LogL.MSS_END_COLLECT, this + " changed value of EndCollect : " + endCollect + " -> " + newValue);
+		endCollect = newValue;
+	}
+	
+	private void handleProposeMessage(Propose msg) {
+		if (!endCollect) {
+			logger.logln(LogL.MSS_PROPOSE, this + " added " + msg.mh + " to its P set");
+			p.add(msg.mh);
+			logger.logln(LogL.MSS_PROPOSE, this + ".p = " + p + " (size=" + p.size() + ")");
+			
+			logger.logln(LogL.MSS_PROPOSE, this + " added value " + msg.v + " to its New_V set");
+			newV.add(msg.v);
+			logger.logln(LogL.MSS_PROPOSE, this + ".newV = " + newV);
+			
+			if (canEndCollection()) {
+				loggedEndCollectChange(false);
+			}
+			
+			if (phase > 1) {
+				loggedSendToMSSc(new Estimate(this, r, newV, p, ts));
 			}
 		}
 	}
 
-	private void handleInit1OrInit2() {
+	private void handleInit1AndInit2Messages() {
 		if (phase == 0) {
 			loggedWiredBroadcast(new Init2());
 			loggedPhaseChange(1);
@@ -193,6 +258,8 @@ public class MobileSupportStation extends Node {
 		nbN = new HashMap<Integer, Integer>();
 		nbN.put(r, 0);
 		endCollect = false;
+		myInbox = new ArrayList<Message>();     // Inbox for messages from itself (read-only)
+		myOutbox = new ArrayList<Message>();    // Inbox for messages to itself (append-only)
 	}
 
 	@Override
@@ -200,8 +267,11 @@ public class MobileSupportStation extends Node {
 
 	@Override
 	public void postStep() {
-		// TODO Auto-generated method stub
-
+		// Swap boxes and clear outbox
+		ArrayList<Message> tmp = myInbox;
+		myInbox = myOutbox;
+		myOutbox = tmp;
+		myOutbox.clear();
 	}
 	
 	@Override

@@ -33,11 +33,11 @@ public class NewEstimate extends Message {
 	@Override
 	public String toString() {
 		return "NEW_ESTIMATE(" +
-				estimate.mss_j + ", " +
+				estimate.mss + ", " +
 				estimate.r + ", " +
-				estimate.v_j + ", " +
-				estimate.p_j + ", " +
-				estimate.ts_j + ", " +
+				estimate.v + ", " +
+				estimate.p + ", " +
+				estimate.ts + ", " +
 				endCollect_c + ")";
 	}
 }

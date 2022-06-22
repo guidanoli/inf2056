@@ -196,7 +196,7 @@
 		</RandomWayPoint>
 		
 		<CTMobile>
-			<MobileHost maxValue="100" pStart="0.1"/>
+			<MobileHost maxValue="100" pStart="0.05"/>
 		</CTMobile>
 		
 		<RandomDirection>

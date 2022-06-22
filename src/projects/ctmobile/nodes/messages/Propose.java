@@ -17,11 +17,11 @@ public class Propose extends Message {
 	
 	/**
 	 * @param mh mobile host
-	 * @param v_k proposed value
+	 * @param v proposed value
 	 */
-	public Propose(MobileHost mh, int v_k) {
+	public Propose(MobileHost mh, int v) {
 		this.mh = mh;
-		this.v = v_k;
+		this.v = v;
 	}
 	
 	@Override

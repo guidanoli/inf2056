@@ -2,6 +2,8 @@ package projects.ctmobile.nodes.messages;
 
 import java.util.HashSet;
 
+import projects.ctmobile.nodes.nodeImplementations.MobileHost;
+import projects.ctmobile.nodes.nodeImplementations.MobileSupportStation;
 import sinalgo.nodes.messages.Message;
 
 /**
@@ -19,36 +21,35 @@ import sinalgo.nodes.messages.Message;
  */
 public class Estimate extends Message {
 
-	public int mss_j;
+	public MobileSupportStation mss;
 	public int r;
-	public HashSet<Integer> v_j;
-	public HashSet<Integer> p_j;
-	public int ts_j;
+	public HashSet<Integer> v;
+	public HashSet<MobileHost> p;
+	public int ts;
 	
 	/**
 	 * 
-	 * @param mss_j id of base station proposing estimate
-	 * @param r round in which MSS_j is in
-	 * @param v_j set of values
-	 * @param p_j set of mobile workers that have proposed
-	 * @param ts_j time stamp of estimation
+	 * @param mss base station proposing estimate
+	 * @param r round in which MSS is in
+	 * @param v set of values collected by MSS
+	 * @param p set of MHs that have proposed
+	 * @param ts time stamp of estimation
 	 */
-	@SuppressWarnings("unchecked")
-	public Estimate(int mss_j, int r, HashSet<Integer> v_j, HashSet<Integer> p_j, int ts_j) {
-		this.mss_j = mss_j;
+	public Estimate(MobileSupportStation mss, int r, HashSet<Integer> v, HashSet<MobileHost> p, int ts) {
+		this.mss = mss;
 		this.r = r;
-		this.v_j = (HashSet<Integer>)v_j.clone();
-		this.p_j = (HashSet<Integer>)p_j.clone();
-		this.ts_j = ts_j;
+		this.v = (HashSet<Integer>)v.clone();
+		this.p = (HashSet<MobileHost>)p.clone();
+		this.ts = ts;
 	}
 	
 	@Override
 	public Message clone() {
-		return new Estimate(mss_j, r, v_j, p_j, ts_j);
+		return new Estimate(mss, r, v, p, ts);
 	}
 
 	@Override
 	public String toString() {
-		return "ESTIMATE(" + mss_j + ", " + r + ", " + v_j + ", " + p_j + ", " + ts_j + ")";
+		return "ESTIMATE(" + mss + ", " + r + ", " + v + ", " + p + ", " + ts + ")";
 	}
 }

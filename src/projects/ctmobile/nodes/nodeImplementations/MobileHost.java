@@ -11,15 +11,19 @@ import projects.ctmobile.nodes.messages.Guest;
 import projects.ctmobile.nodes.messages.Init1;
 import projects.ctmobile.nodes.messages.Init3;
 import projects.ctmobile.nodes.messages.Propose;
+import projects.defaultProject.nodes.timers.MessageTimer;
+import projects.sample1.nodes.messages.S1Message;
 import sinalgo.configuration.Configuration;
 import sinalgo.configuration.CorruptConfigurationEntryException;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
+import sinalgo.nodes.Node.NodePopupMethod;
 import sinalgo.nodes.edges.Edge;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 import sinalgo.runtime.Main;
+import sinalgo.tools.Tools;
 import sinalgo.tools.logging.Logging;
 import sinalgo.tools.statistics.Distribution;
 
@@ -72,7 +76,11 @@ public class MobileHost extends Node {
 	
 	private Logging logger = Logging.getLogger("ctmobile.log");
 	
-	public void loggedChangeAppState(ApplicationState newState) {
+	public static int getNumberOfInstances() {
+		return allMHs.size();
+	}
+	
+	public void loggedAppStateChange(ApplicationState newState) {
 		logger.logln(LogL.MH_APP_STATES, this + " changed its app state: " + appState + " -> " + newState);
 		appState = newState;
 	}
@@ -83,12 +91,10 @@ public class MobileHost extends Node {
 			logger.logln(LogL.MH, this + " received " + msg);
 			if (msg instanceof Init3) {
 				// Action 2
-				Node sender = inbox.getSender();
-				loggedSend(new Propose(this, initialValue), sender);
-				loggedChangeAppState(ApplicationState.AwaitingConsensus);
+				loggedSend(new Propose(this, initialValue), inbox.getSender());
 			} else if (msg instanceof Decide) {
 				// Action 3
-				loggedChangeAppState(ApplicationState.ReachedConsensus);
+				loggedAppStateChange(ApplicationState.ReachedConsensus);
 			}
 		}
 	}
@@ -112,14 +118,7 @@ public class MobileHost extends Node {
 		// application may randomly request consensus to start
 		if (appState == ApplicationState.Idle && random.nextDouble() < pStart) {
 			initialValue = random.nextInt(maxValue);
-			loggedChangeAppState(ApplicationState.RequestingConsensus);
-		}
-		
-		// if application is requesting consensus and there is some MSS nearby
-		// if MSS is not null, then it must have sent Guest to it already
-		if (appState == ApplicationState.RequestingConsensus && mss != null) {
-			// Action 1
-			loggedSend(new Init1(), mss);
+			loggedAppStateChange(ApplicationState.RequestingConsensus);
 		}
 	}
 
@@ -176,6 +175,12 @@ public class MobileHost extends Node {
 	
 	@Override
 	public void postStep() {
+		// Messages are reliably sent to MSS here
+		if (appState == ApplicationState.RequestingConsensus && mss != null) {
+			// Action 1
+			loggedSend(new Init1(), mss);
+			loggedAppStateChange(ApplicationState.AwaitingConsensus);
+		}
 	}
 
 	@Override

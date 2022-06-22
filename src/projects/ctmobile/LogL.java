@@ -53,6 +53,12 @@ public class LogL extends sinalgo.tools.logging.LogL{
 
 	// Mobile support station phase changes
 	public static final boolean MSS_PHASES = true;
+
+	// Mobile support station changes related to Propose
+	public static final boolean MSS_PROPOSE = true;
+
+	// Mobile support station changes related to EndCollect
+	public static final boolean MSS_END_COLLECT = true;
 	
 	// Hand-off procedure details
 	public static final boolean HANDOFF = true;
