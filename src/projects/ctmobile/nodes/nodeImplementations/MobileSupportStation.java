@@ -11,6 +11,8 @@ import projects.ctmobile.nodes.messages.BeginHandoff;
 import projects.ctmobile.nodes.messages.Decide;
 import projects.ctmobile.nodes.messages.Estimate;
 import projects.ctmobile.nodes.messages.Guest;
+import projects.ctmobile.nodes.messages.Init1;
+import projects.ctmobile.nodes.messages.Init2;
 import projects.ctmobile.nodes.messages.Init3;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
@@ -78,18 +80,6 @@ public class MobileSupportStation extends Node {
 	private boolean endCollect;
 	
 	private Logging logger = Logging.getLogger("ctmobile.log");
-	
-	@Override
-	public void handleMessages(Inbox inbox) {
-		for (Message msg : inbox) {
-			logger.logln(LogL.MSS, this + " received " + msg);
-			if (msg instanceof Guest) {
-				handleGuestMessage((Guest)msg);
-			} else if (msg instanceof BeginHandoff) {
-				handleBeginHandoffMessage((BeginHandoff)msg);
-			}
-		}
-	}
 
 	public void loggedSend(Message m, Node target) {
 		send(m, target);
@@ -101,6 +91,51 @@ public class MobileSupportStation extends Node {
 		logger.logln(LogL.MSS, this + " sent " + m + " directly to " + target);
 	}
 	
+	// Broadcasts to all MSSs
+	public void loggedWiredBroadcast(Message msg) {
+		for (MobileSupportStation mss : allMSSs) {
+			if (mss != this) {
+				loggedSendDirect(msg, mss);
+			}
+		}
+	}
+	
+	// Broadcasts to all local MHs
+	public void loggedWirelessBroadcast(Message msg) {
+		for (MobileHost mh : localMHs) {
+			loggedSend(msg, mh);
+		}
+	}
+	
+	public void loggedPhaseChange(int newPhase) {
+		logger.logln(LogL.MSS_PHASES, this + " changed phase: " + phase + " -> " + newPhase);
+		phase = newPhase;
+	}
+	
+	@Override
+	public void handleMessages(Inbox inbox) {
+		for (Message msg : inbox) {
+			logger.logln(LogL.MSS, this + " received " + msg);
+			if (msg instanceof Guest) {
+				handleGuestMessage((Guest)msg);
+			} else if (msg instanceof BeginHandoff) {
+				handleBeginHandoffMessage((BeginHandoff)msg);
+			} else if (msg instanceof Init1 || msg instanceof Init2) {
+				handleInit1OrInit2();
+			}
+		}
+	}
+
+	private void handleInit1OrInit2() {
+		if (phase == 0) {
+			loggedWiredBroadcast(new Init2());
+			loggedPhaseChange(1);
+			if (!localMHs.isEmpty() && !endCollect) {
+				loggedWirelessBroadcast(new Init3());
+			}
+		}
+	}
+
 	private void handleBeginHandoffMessage(BeginHandoff msg) {
 		// Hand-off procedure (3)
 		logger.logln(LogL.HANDOFF, this + " removed " + msg.mh + " from its local mobile host set");

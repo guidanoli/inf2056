@@ -72,6 +72,11 @@ public class MobileHost extends Node {
 	
 	private Logging logger = Logging.getLogger("ctmobile.log");
 	
+	public void loggedChangeAppState(ApplicationState newState) {
+		logger.logln(LogL.MH_APP_STATES, this + " changed its app state: " + appState + " -> " + newState);
+		appState = newState;
+	}
+	
 	@Override
 	public void handleMessages(Inbox inbox) {
 		for (Message msg : inbox) {
@@ -80,9 +85,10 @@ public class MobileHost extends Node {
 				// Action 2
 				Node sender = inbox.getSender();
 				loggedSend(new Propose(this, initialValue), sender);
+				loggedChangeAppState(ApplicationState.AwaitingConsensus);
 			} else if (msg instanceof Decide) {
 				// Action 3
-				appState = ApplicationState.ReachedConsensus;
+				loggedChangeAppState(ApplicationState.ReachedConsensus);
 			}
 		}
 	}
@@ -106,7 +112,7 @@ public class MobileHost extends Node {
 		// application may randomly request consensus to start
 		if (appState == ApplicationState.Idle && random.nextDouble() < pStart) {
 			initialValue = random.nextInt(maxValue);
-			appState = ApplicationState.RequestingConsensus;
+			loggedChangeAppState(ApplicationState.RequestingConsensus);
 		}
 		
 		// if application is requesting consensus and there is some MSS nearby
@@ -114,7 +120,6 @@ public class MobileHost extends Node {
 		if (appState == ApplicationState.RequestingConsensus && mss != null) {
 			// Action 1
 			loggedSend(new Init1(), mss);
-			appState = ApplicationState.AwaitingConsensus;
 		}
 	}
 
