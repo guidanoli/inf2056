@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ $# -ge 2 ]] || (echo "Usage: $0 N_MH N_MSS" && exit 1)
+[[ $# -ge 2 ]] || (echo "Usage: $0 N_MH N_MSS [WT]" && exit 1)
 n_mh=$1
 n_mss=$2
+wt=${3:-20}
 max_rounds=2000
 
 rm -rf logs
@@ -17,6 +18,7 @@ do
         -project ctmobile \
         -gen "$n_mh"  ctmobile:MobileHost           Random RandomWayPoint \
         -gen "$n_mss" ctmobile:MobileSupportStation Grid2D NoMobility \
+        -overwrite "RandomWayPoint/WaitingTime/lambda=$wt" \
         -rounds "$max_rounds" \
         2>/dev/null 1>/dev/null
     printf '='

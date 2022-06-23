@@ -96,6 +96,7 @@ public class MobileHost extends Node {
 			if (msg instanceof Init3) {
 				// Action 2
 				loggedSend(new Propose(this, initialValue), inbox.getSender());
+				loggedAppStateChange(ApplicationState.AwaitingConsensus);
 			} else if (msg instanceof Decide) {
 				// Action 3
 				loggedAppStateChange(ApplicationState.ReachedConsensus);
@@ -187,10 +188,8 @@ public class MobileHost extends Node {
 	@Override
 	public void postStep() {
 		// Action 1
-		if ((appState == ApplicationState.RequestingConsensus ||
-				appState == ApplicationState.AwaitingConsensus) && mss != null) {
+		if (appState == ApplicationState.RequestingConsensus && mss != null) {
 			loggedSend(new Init1(), mss);
-			loggedAppStateChange(ApplicationState.AwaitingConsensus);
 		}
 	}
 
