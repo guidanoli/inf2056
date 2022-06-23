@@ -297,18 +297,25 @@ public class MobileSupportStation extends Node {
 	private void addEstimateToLog(Estimate newE) {
 		initRound(newE.r);
 		HashSet<Estimate> estimates = log.get(newE.r);
+		HashSet<Estimate> toRemove = new HashSet<Estimate>();
 		for (Estimate e : estimates) {
 			if ((e.mss == newE.mss) &&
 				(e.r == newE.r) &&
-				(e.ts == newE.ts) &&
-				(e.v.size() > newE.v.size()))
+				(e.ts == newE.ts))
 			{
-				// has estimate with set of values
-				// with higher or the same cardinality
-				return;
+				if (e.v.size() <= newE.v.size()) {
+					// By definition of the @ operator,
+					// this should be removed
+					toRemove.add(e);
+				} else {
+					// has estimate with set of values
+					// with higher or the same cardinality
+					return;
+				}
 			}
 		}
 		estimates.add(newE);
+		estimates.removeAll(toRemove);
 		logger.logln(LogL.MSS_LOG, this + " added estimate " + newE + " to its log of round " + newE.r);
 		logger.logln(LogL.MSS_LOG, this + ".log[" + newE.r + "] = " + estimates);
 	}
