@@ -104,7 +104,7 @@ public class CustomGlobal extends AbstractCustomGlobal {
 		for (MobileHost mh : MobileHost.allMHs) {
 			initialValues.add(mh.initialValue);
 			if (mh.consensus == null) {
-				return; // consensus not reached
+				continue; // consensus not reached
 			}
 			if (consensus == null) {
 				consensus = mh.consensus;

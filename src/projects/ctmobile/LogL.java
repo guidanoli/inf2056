@@ -42,13 +42,13 @@ package projects.ctmobile;
  */
 public class LogL extends sinalgo.tools.logging.LogL{
 	
-	// Mobile host events
+	// Mobile host message sending and receiving
 	public static final boolean MH = false;
 	
 	// Mobile host application state changes
 	public static final boolean MH_APP_STATES = false;
 
-	// Mobile support station events
+	// Mobile support station message sending and receiving
 	public static final boolean MSS = false;
 
 	// Mobile support station phase changes

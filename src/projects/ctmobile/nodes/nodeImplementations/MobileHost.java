@@ -68,12 +68,16 @@ public class MobileHost extends Node {
 	// The mobile support station with whom this node communicates directly
 	private MobileSupportStation mss;
 	
+	// The mobile support station with whom this node last communicated with
+	private MobileSupportStation lastMSS;
+		
 	// Value provided by the application program running on a mobile host
 	public int initialValue = -1;
 	
-	// consensus value
+	// Value chosen by the distributed consensus algorithm
 	public HashSet<Integer> consensus;
 	
+	// Logger object
 	private Logging logger = Logging.getLogger("ctmobile.log");
 	
 	public static int getNumberOfInstances() {
@@ -135,12 +139,11 @@ public class MobileHost extends Node {
 			color = Color.GREEN;
 			break;
 		default:
-			color = Color.WHITE;
+			color = Color.GRAY;
 			break;
 		}
 		this.setColor(color);
-		String text = Integer.toString(getIndex());
-		super.drawNodeAsDiskWithText(g, pt, highlight, text, 24, Color.BLACK);
+		super.drawNodeAsDiskWithText(g, pt, highlight, "", 24, Color.BLACK);
 	}
 	
 	@Override
@@ -167,19 +170,25 @@ public class MobileHost extends Node {
 		}
 		// the MH is not connected to a MSS
 		// So we check if there is some other MSS
-		if (someMSS != null) {
+		// that is different from the last MSS
+		if (someMSS != null && someMSS != lastMSS) {
 			// Hand-off procedure (1)
-			loggedSend(new Guest(this, mss), someMSS);
+			loggedSend(new Guest(this, lastMSS), someMSS);
 			logger.logln(LogL.HANDOFF, this + " now talks to " + someMSS);
 		}
-		// Update MSS
+		// Update MSS (might be null)
 		mss = someMSS;
+		// Update Last MSS (not null)
+		if (mss != null) {
+			lastMSS = mss;
+		}
 	}
 	
 	@Override
 	public void postStep() {
 		// Action 1
-		if (appState == ApplicationState.RequestingConsensus && mss != null) {
+		if ((appState == ApplicationState.RequestingConsensus ||
+				appState == ApplicationState.AwaitingConsensus) && mss != null) {
 			loggedSend(new Init1(), mss);
 			loggedAppStateChange(ApplicationState.AwaitingConsensus);
 		}

@@ -184,23 +184,24 @@
 
 		<Node defaultSize="10" />
 
-		<GeometricNodeCollection rMax="200"/>
+		<GeometricNodeCollection rMax="1000"/>
 
 		<UDG rMax="200"/>
 
 		<SINR alpha="2" beta="0.7" noise="0"/>
 
 		<RandomWayPoint>
-			<Speed distribution="Gaussian" mean="10" variance="20" />
+			<Speed distribution="Gaussian" mean="50" variance="5" />
 			<WaitingTime distribution="Poisson" lambda="10" />
 		</RandomWayPoint>
 
 		<CTMobile>
-			<MobileHost maxValue="100" pStart="0.05"/>
+			<MobileHost maxValue="100" pStart="1.0"/>
+			<MobileSupportStation nRoundsToSuspect="100"/>
 		</CTMobile>
 		
 		<RandomDirection>
-			<NodeSpeed distribution="Gaussian" mean="10" variance="20" />
+			<NodeSpeed distribution="Gaussian" mean="20" variance="20" />
 			<WaitingTime distribution="Poisson" lambda="10" />
 			<MoveTime distribution="Uniform" min="5" max="20" />
 		</RandomDirection>

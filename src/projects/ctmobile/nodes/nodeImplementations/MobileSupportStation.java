@@ -36,7 +36,16 @@ public class MobileSupportStation extends Node {
 	 */
 	
 	// all mobile support station nodes
-	private static Vector<MobileSupportStation> allMSSs = new Vector<MobileSupportStation>();
+	public static Vector<MobileSupportStation> allMSSs = new Vector<MobileSupportStation>();
+	
+	private static int nRoundsToSuspect;
+	{
+		try {
+			nRoundsToSuspect = Configuration.getIntegerParameter("ctmobile/MobileSupportStation/nRoundsToSuspect");
+		} catch(CorruptConfigurationEntryException e) {
+			Tools.fatalError(e.getMessage());
+		}
+	}
 	
 	/**
 	 * Instance variables
@@ -67,7 +76,7 @@ public class MobileSupportStation extends Node {
 	
 	// Set containing the identities of the mobile hosts whose initial values are already known by MSS_i.
 	// MSS_i collects values of the mobile hosts located in its cell until endCollect = true.
-	private HashSet<MobileHost> p;
+	public HashSet<MobileHost> p;
 	
 	// Set containing the collected values.
 	private HashSet<Integer> newV;
@@ -93,16 +102,19 @@ public class MobileSupportStation extends Node {
 	// Outbox for messages sent this node by itself
 	private ArrayList<Message> myOutbox;
 	
+	// Number of rounds in phase 3
+	private int roundsInPhase3;
+	
 	// Logger for logging events
 	private Logging logger = Logging.getLogger("ctmobile.log");
 
-	public void loggedSend(Message m, Node target) {
+	private void loggedSend(Message m, Node target) {
 		assert(target != this);
 		send(m, target);
 		logger.logln(LogL.MSS, this + " sent " + m + " to " + target);
 	}
 
-	public void loggedSendDirect(Message m, Node target) {
+	private void loggedSendDirect(Message m, Node target) {
 		if (target == this) {
 			myOutbox.add(m);
 		} else {
@@ -112,7 +124,7 @@ public class MobileSupportStation extends Node {
 	}
 	
 	// Broadcasts to all MSSs
-	public void loggedWiredBroadcast(Message msg, boolean includeItself) {
+	private void loggedWiredBroadcast(Message msg, boolean includeItself) {
 		for (MobileSupportStation mss : allMSSs) {
 			if ((mss != this) || includeItself) {
 				loggedSendDirect(msg, mss);
@@ -121,53 +133,78 @@ public class MobileSupportStation extends Node {
 	}
 	
 	// Broadcasts to all local MHs
-	public void loggedWirelessBroadcast(Message msg) {
+	private void loggedWirelessBroadcast(Message msg) {
 		for (MobileHost mh : localMHs) {
 			loggedSend(msg, mh);
 		}
 	}
 	
-	public void loggedSendToMSSc(Message msg) {
+	private void loggedSendToMSSc(Message msg) {
 		loggedSendDirect(msg, getMSSc());
 	}
 	
-	public MobileSupportStation getMSSc() {
+	private MobileSupportStation getMSSc() {
 		int c = r % allMSSs.size();
 		return allMSSs.elementAt(c);
 	}
 	
-	public void loggedPhaseChange(int newPhase) {
-		logger.logln(LogL.MSS_PHASES, this + " changed phase: " + phase + " -> " + newPhase);
+	private void loggedPhaseChange(int newPhase) {
+		int oldPhase = phase;
 		phase = newPhase;
+		logger.logln(LogL.MSS_PHASES, this + " changed phase: " + oldPhase + " -> " + newPhase);
 	}
 	
-	public void loggedAddP(MobileHost mh) {
-		logger.logln(LogL.MSS_P_SET, this + " added node " + mh + " to its P set");
+	private void loggedAddP(MobileHost mh) {
 		p.add(mh);
+		logger.logln(LogL.MSS_P_SET, this + " added node " + mh + " to its P set");
 		logger.logln(LogL.MSS_P_SET, this + ".p = " + p + " (size=" + p.size() + ")");
 	}
 	
-	public void loggedAddPs(HashSet<MobileHost> mhs) {
-		logger.logln(LogL.MSS_P_SET, this + " added nodes " + mhs + " to its P set");
+	private void loggedAddPs(HashSet<MobileHost> mhs) {
 		p.addAll(mhs);
+		logger.logln(LogL.MSS_P_SET, this + " added nodes " + mhs + " to its P set");
 		logger.logln(LogL.MSS_P_SET, this + ".p = " + p + " (size=" + p.size() + ")");
 	}
 	
-	public void loggedAddVToNewV(Integer vToAdd) {
-		logger.logln(LogL.MSS_V_SET, this + " added value " + vToAdd + " to its New_V set");
+	private void loggedAddVToNewV(Integer vToAdd) {
 		newV.add(vToAdd);
+		logger.logln(LogL.MSS_V_SET, this + " added value " + vToAdd + " to its New_V set");
 		logger.logln(LogL.MSS_V_SET, this + ".newV = " + newV);
 	}
 
-	public void loggedAddVsToNewV(HashSet<Integer> vsToAdd) {
-		logger.logln(LogL.MSS_V_SET, this + " added values " + vsToAdd + " to its New_V set");
+	private void loggedAddVsToNewV(HashSet<Integer> vsToAdd) {
 		newV.addAll(vsToAdd);
+		logger.logln(LogL.MSS_V_SET, this + " added values " + vsToAdd + " to its New_V set");
 		logger.logln(LogL.MSS_V_SET, this + ".newV = " + newV);
 	}
 	
-	public void loggedUpdateV(HashSet<Integer> vToOverwrite) {
-		logger.logln(LogL.MSS_V_SET, this + " updated its V set to " + vToOverwrite);
+	private void loggedUpdateV(HashSet<Integer> vToOverwrite) {
 		v = new HashSet<Integer>(vToOverwrite);
+		logger.logln(LogL.MSS_V_SET, this + " updated its V set to " + vToOverwrite);
+	}
+
+	private void loggedStateChange(State newState) {
+		State oldState = state;
+		state = newState;
+		logger.logln(LogL.MSS_STATE, this + " changed its state: " + oldState + " -> " + newState);
+	}
+
+	private void loggedTimestampChange(int newTs) {
+		int oldTs = ts;
+		ts = newTs;
+		logger.logln(LogL.MSS_TS, this + " changed its timestamp: " + oldTs + " -> " + newTs);
+	}
+
+	private void loggedEndCollectChange(boolean newValue) {
+		boolean oldValue = endCollect;
+		endCollect = newValue;
+		logger.logln(LogL.MSS_END_COLLECT, this + " changed value of EndCollect : " + oldValue + " -> " + newValue);
+	}
+
+	private void loggedNextRound() {
+		r = r + 1;
+		initRound(r);
+		logger.logln(LogL.MSS_ROUND, this + " is now on round " + r);
 	}
 	
 	@Override
@@ -207,11 +244,6 @@ public class MobileSupportStation extends Node {
 		}
 	}
 	
-	public void loggedTimestampChange(int newTs) {
-		logger.logln(LogL.MSS_TS, this + " changed its timestamp: " + ts + " -> " + newTs);
-		ts = newTs;
-	}
-
 	private void handleNewEstimativeMessage(NewEstimate msg) {
 		// Action 12
 		if (phase == 3) {
@@ -238,23 +270,22 @@ public class MobileSupportStation extends Node {
 
 	private void handlePositiveAckMessage(PA msg) {
 		// Action 8
-		nbP.put(msg.r, nbP.getOrDefault(msg.r, 0) + 1);
+		int round = msg.r;
+		initRound(round);
+		nbP.put(round, nbP.get(round) + 1);
 		logger.logln(LogL.MSS_ACKS, this + " received a positive ack");
-		logger.logln(LogL.MSS_ACKS, this + " votes for round " + msg.r + ": " +
-				nbP.get(msg.r) + " pos / " + nbN.get(msg.r) + " neg");
+		logger.logln(LogL.MSS_ACKS, this + " votes for round " + round + ": " +
+				nbP.get(round) + " pos / " + nbN.get(round) + " neg");
 	}
 
 	private void handleNegativeAckMessage(NA msg) {
 		// Action 9 
-		nbN.put(msg.r, nbN.getOrDefault(msg.r, 0) + 1);
+		int round = msg.r;
+		initRound(round);
+		nbN.put(round, nbN.get(round) + 1);
 		logger.logln(LogL.MSS_ACKS, this + " received a negative ack");
-		logger.logln(LogL.MSS_ACKS, this + " votes for round " + msg.r + ": " +
-				nbP.get(msg.r) + " pos / " + nbN.get(msg.r) + " neg");
-	}
-
-	private HashSet<Estimate> safeGetLog(int round) {
-		log.putIfAbsent(round, new HashSet<Estimate>());
-		return log.get(round);
+		logger.logln(LogL.MSS_ACKS, this + " votes for round " + round + ": " +
+				nbP.get(round) + " pos / " + nbN.get(round) + " neg");
 	}
 	
 	/**
@@ -264,7 +295,8 @@ public class MobileSupportStation extends Node {
 	 * then (MSS_i,r,V_i', ts_i) is removed from Log_c[r].
 	 */
 	private void addEstimateToLog(Estimate newE) {
-		HashSet<Estimate> estimates = safeGetLog(newE.r);
+		initRound(newE.r);
+		HashSet<Estimate> estimates = log.get(newE.r);
 		for (Estimate e : estimates) {
 			if ((e.mss == newE.mss) &&
 				(e.r == newE.r) &&
@@ -293,11 +325,6 @@ public class MobileSupportStation extends Node {
 		}
 	}
 
-	public void loggedStateChange(State newState) {
-		logger.logln(LogL.MSS_STATE, this + " changed its state: " + state + " -> " + newState);
-		state = newState;
-	}
-	
 	private void handleDecideMessage(Decide msg) {
 		// Action 6
 		if (state == State.Undecided) {
@@ -313,11 +340,6 @@ public class MobileSupportStation extends Node {
 		return p.size() == MobileHost.getNumberOfInstances();
 	}
 
-	public void loggedEndCollectChange(boolean newValue) {
-		logger.logln(LogL.MSS_END_COLLECT, this + " changed value of EndCollect : " + endCollect + " -> " + newValue);
-		endCollect = newValue;
-	}
-	
 	private void handleProposeMessage(Propose msg) {
 		// Action 5
 		if (!endCollect) {
@@ -345,15 +367,15 @@ public class MobileSupportStation extends Node {
 
 	private void handleBeginHandoffMessage(BeginHandoff msg) {
 		// Hand-off procedure (3)
-		logger.logln(LogL.HANDOFF, this + " removed " + msg.mh + " from its local mobile host set");
 		localMHs.remove(msg.mh);
+		logger.logln(LogL.HANDOFF, this + " removed " + msg.mh + " from its local mobile host set");
 		logger.logln(LogL.HANDOFF, this + ".localMHs = " + localMHs);
 	}
 
 	private void handleGuestMessage(Guest msg) {
 		// Hand-off procedure (2)
-		logger.logln(LogL.HANDOFF, this + " added " + msg.mh + " to its local mobile host set");
 		localMHs.add(msg.mh);
+		logger.logln(LogL.HANDOFF, this + " added " + msg.mh + " to its local mobile host set");
 		logger.logln(LogL.HANDOFF, this + ".localMHs = " + localMHs);
 		
 		if (msg.oldMSS != null) {
@@ -369,8 +391,11 @@ public class MobileSupportStation extends Node {
 
 	@Override
 	public void preStep() {
-		// TODO Auto-generated method stub
-
+		if (phase == 3) {
+			roundsInPhase3++;
+		} else {
+			roundsInPhase3 = 0;
+		}
 	}
 	
 	public int getIndex() {
@@ -399,27 +424,22 @@ public class MobileSupportStation extends Node {
 		endCollect = false;
 		myInbox = new ArrayList<Message>();     // Inbox for messages from itself (read-only)
 		myOutbox = new ArrayList<Message>();    // Inbox for messages to itself (append-only)
-		initRound();
+		roundsInPhase3 = 0;
+		initRound(r);
 	}
 
 	@Override
 	public void neighborhoodChange() {}
 
-	public static double majorityOfMSSs() {
+	private static double majorityOfMSSs() {
 		int n = allMSSs.size();
 		return n / 2.0;
 	}
 	
-	public void initRound() {
-		log.put(r, new HashSet<Estimate>());
-		nbP.put(r, 0);
-		nbN.put(r, 0);
-	}
-	
-	public void loggedNextRound() {
-		r++;
-		logger.logln(LogL.MSS_ROUND, this + " is now on round " + r);
-		initRound();
+	private void initRound(int round) {
+		log.putIfAbsent(round, new HashSet<Estimate>());
+		nbP.putIfAbsent(round, 0);
+		nbN.putIfAbsent(round, 0);
 	}
 	
 	@Override
@@ -439,7 +459,7 @@ public class MobileSupportStation extends Node {
 		}
 		
 		// Action 11
-		else if ((phase == 2) && (log.get(r).size() > majorityOfMSSs())) {
+		if ((phase == 2) && (log.get(r).size() > majorityOfMSSs())) {
 			int tsMax = 0;
 			Estimate eMax = null;
 			for (Estimate e : log.get(r)) {
@@ -458,10 +478,14 @@ public class MobileSupportStation extends Node {
 			loggedPhaseChange(3);
 		}
 		
-		// Action 13 is ignored because we assume MSSs don't fail
+		// Action 13
+		if ((phase == 3) && (roundsInPhase3 >= nRoundsToSuspect)) {
+			loggedSendToMSSc(new NA(this, r));
+			phase = 1;
+		}
 		
 		// Action 14
-		else if ((phase == 4) && ((nbP.get(r) + nbN.get(r)) > majorityOfMSSs())) {
+		if ((phase == 4) && ((nbP.get(r) + nbN.get(r)) > majorityOfMSSs())) {
 			if (nbP.get(r) > majorityOfMSSs()) {
 				loggedWiredBroadcast(new Decide(v), false);
 				loggedStateChange(State.Decided);
@@ -481,7 +505,7 @@ public class MobileSupportStation extends Node {
 	private static int radius;
 	{
 		try {
-			radius = Configuration.getIntegerParameter("GeometricNodeCollection/rMax");
+			radius = Configuration.getIntegerParameter("UDG/rMax");
 		} catch(CorruptConfigurationEntryException e) {
 			Tools.fatalError(e.getMessage());
 		}
@@ -494,11 +518,12 @@ public class MobileSupportStation extends Node {
 		} else {
 			this.setColor(Color.getHSBColor(.33f, 1.f, .39f));
 		}
-		String text = Integer.toString(getIndex()) + "|" + phase;
+		String text = Integer.toString(phase);
 		this.drawNodeAsSquareWithText(g, pt, highlight, text, 24, Color.WHITE);
 		pt.translateToGUIPosition(this.getPosition());
-		int r = (int) (radius * pt.getZoomFactor());
-		g.drawOval(pt.guiX - r, pt.guiY - r, r*2, r*2);
+		int ovalR = (int) (radius * pt.getZoomFactor());
+		g.setColor(Color.GRAY);
+		g.drawOval(pt.guiX - ovalR, pt.guiY - ovalR, ovalR*2, ovalR*2);
 	}
 
 	@Override
