@@ -1,5 +1,9 @@
 package projects.ctmobile.nodes.messages;
 
+import java.util.HashSet;
+
+import projects.ctmobile.nodes.nodeImplementations.MobileHost;
+import projects.ctmobile.nodes.nodeImplementations.MobileSupportStation;
 import sinalgo.nodes.messages.Message;
 
 /**
@@ -17,27 +21,32 @@ import sinalgo.nodes.messages.Message;
  */
 public class NewEstimate extends Message {
 
-	public Estimate estimate;
-	public boolean endCollect_c;
+	public MobileSupportStation mss;
+	public int r;
+	public HashSet<Integer> v;
+	public HashSet<MobileHost> p;
+	public boolean endCollect;
 
-	public NewEstimate(Estimate estimate, boolean endCollect_c) {
-		this.estimate = (Estimate)estimate.clone();
-		this.endCollect_c = endCollect_c;
+	public NewEstimate(MobileSupportStation mss, int r, HashSet<Integer> v, HashSet<MobileHost> p, boolean endCollect_c) {
+		this.mss = mss;
+		this.r = r;
+		this.v = new HashSet<Integer>(v);
+		this.p = new HashSet<MobileHost>(p);
+		this.endCollect = endCollect_c;
 	}
 	
 	@Override
 	public Message clone() {
-		return new NewEstimate(estimate, endCollect_c);
+		return new NewEstimate(mss, r, v, p, endCollect);
 	}
 
 	@Override
 	public String toString() {
 		return "NEW_ESTIMATE(" +
-				estimate.mss + ", " +
-				estimate.r + ", " +
-				estimate.v + ", " +
-				estimate.p + ", " +
-				estimate.ts + ", " +
-				endCollect_c + ")";
+				mss + ", " +
+				r + ", " +
+				v + ", " +
+				p + ", " +
+				endCollect + ")";
 	}
 }

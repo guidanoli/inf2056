@@ -43,25 +43,43 @@ package projects.ctmobile;
 public class LogL extends sinalgo.tools.logging.LogL{
 	
 	// Mobile host events
-	public static final boolean MH = true;
+	public static final boolean MH = false;
 	
 	// Mobile host application state changes
-	public static final boolean MH_APP_STATES = true;
+	public static final boolean MH_APP_STATES = false;
 
 	// Mobile support station events
-	public static final boolean MSS = true;
+	public static final boolean MSS = false;
 
 	// Mobile support station phase changes
-	public static final boolean MSS_PHASES = true;
+	public static final boolean MSS_PHASES = false;
 
-	// Mobile support station changes related to Propose
-	public static final boolean MSS_PROPOSE = true;
+	// Mobile support station changes related to the P set
+	public static final boolean MSS_P_SET = false;
+
+	// Mobile support station changes related to the V / New_V sets
+	public static final boolean MSS_V_SET = false;
 
 	// Mobile support station changes related to EndCollect
-	public static final boolean MSS_END_COLLECT = true;
+	public static final boolean MSS_END_COLLECT = false;
+
+	// Mobile support station changes related to r
+	public static final boolean MSS_ROUND = false;
+
+	// Mobile support station changes related to the log of estimates
+	public static final boolean MSS_LOG = false;
+
+	// Mobile support station changes related to acknowledgement
+	public static final boolean MSS_ACKS = false;
+	
+	// Mobile support station changes related to the state
+	public static final boolean MSS_STATE = false;
+	
+	// Mobile support station changes related to the time stamp
+	public static final boolean MSS_TS = false;
 	
 	// Hand-off procedure details
-	public static final boolean HANDOFF = true;
+	public static final boolean HANDOFF = false;
 }
 
 

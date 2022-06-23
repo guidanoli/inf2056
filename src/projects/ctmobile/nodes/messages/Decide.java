@@ -16,9 +16,8 @@ public class Decide extends Message {
 
 	public HashSet<Integer> v;
 	
-	@SuppressWarnings("unchecked")
 	public Decide(HashSet<Integer> v) {
-		this.v = (HashSet<Integer>)v.clone();
+		this.v = new HashSet<Integer>(v);
 	}
 	
 	@Override

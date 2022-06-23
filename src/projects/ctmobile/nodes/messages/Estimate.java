@@ -38,8 +38,8 @@ public class Estimate extends Message {
 	public Estimate(MobileSupportStation mss, int r, HashSet<Integer> v, HashSet<MobileHost> p, int ts) {
 		this.mss = mss;
 		this.r = r;
-		this.v = (HashSet<Integer>)v.clone();
-		this.p = (HashSet<MobileHost>)p.clone();
+		this.v = new HashSet<Integer>(v);
+		this.p = new HashSet<MobileHost>(p);
 		this.ts = ts;
 	}
 	

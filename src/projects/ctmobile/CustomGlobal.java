@@ -36,16 +36,17 @@
 */
 package projects.ctmobile;
 
+import java.util.HashSet;
 
-import javax.swing.JOptionPane;
-
+import projects.ctmobile.nodes.nodeImplementations.MobileHost;
 import sinalgo.runtime.AbstractCustomGlobal;
+import sinalgo.runtime.Global;
+import sinalgo.tools.Tools;
+import sinalgo.tools.logging.Logging;
 
 /**
- * This class holds customized global state and methods for the framework. 
- * The only mandatory method to overwrite is 
- * <code>hasTerminated</code>
- * <br>
+ * This class holds customized global state and methods for the framework. The
+ * only mandatory method to overwrite is <code>hasTerminated</code> <br>
  * Optional methods to override are
  * <ul>
  * <li><code>customPaint</code></li>
@@ -56,39 +57,68 @@ import sinalgo.runtime.AbstractCustomGlobal;
  * <li><code>postRound</code></li>
  * <li><code>checkProjectRequirements</code></li>
  * </ul>
- * @see sinalgo.runtime.AbstractCustomGlobal for more details.
- * <br>
- * In addition, this class also provides the possibility to extend the framework with
- * custom methods that can be called either through the menu or via a button that is
- * added to the GUI. 
+ * 
+ * @see sinalgo.runtime.AbstractCustomGlobal for more details. <br>
+ *      In addition, this class also provides the possibility to extend the
+ *      framework with custom methods that can be called either through the menu
+ *      or via a button that is added to the GUI.
  */
-public class CustomGlobal extends AbstractCustomGlobal{
-	
-	/* (non-Javadoc)
+public class CustomGlobal extends AbstractCustomGlobal {
+
+	private static Logging logger = Logging.getLogger("ctmobile.log");
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see runtime.AbstractCustomGlobal#hasTerminated()
 	 */
 	public boolean hasTerminated() {
-		return false;
-	}
-
-	/**
-	 * An example of a method that will be available through the menu of the GUI.
-	 */
-	@AbstractCustomGlobal.GlobalMethod(menuText="Echo")
-	public void echo() {
-		// Query the user for an input
-		String answer = JOptionPane.showInputDialog(null, "This is an example.\nType in any text to echo.");
-		// Show an information message 
-		JOptionPane.showMessageDialog(null, "You typed '" + answer + "'", "Example Echo", JOptionPane.INFORMATION_MESSAGE);
+		HashSet<Integer> consensus = null;
+		HashSet<Integer> initialValues = new HashSet<Integer>();
+		for (MobileHost mh : MobileHost.allMHs) {
+			initialValues.add(mh.initialValue);
+			if (mh.consensus == null) {
+				return false;
+			}
+			if (consensus == null) {
+				consensus = mh.consensus;
+			} else if (!consensus.equals(mh.consensus)) {
+				return false; // Some local consensus is different from global consensus
+			}
+		}
+		if (consensus != null) {
+			for (Integer consensusValue : consensus) {
+				if (!initialValues.contains(consensusValue)) {
+					return false; // Some value from consensus was not proposed by anyone
+				}
+			}
+		}
+		logger.logln("CONSENSUS " + (int)Global.currentTime);
+		return true; // All local consensus are equal
 	}
 	
-	/**
-	 * An example to add a button to the user interface. In this sample, the button is labeled
-	 * with a text 'GO'. Alternatively, you can specify an icon that is shown on the button. See
-	 * AbstractCustomGlobal.CustomButton for more details.   
-	 */
-	@AbstractCustomGlobal.CustomButton(buttonText="GO", toolTipText="A sample button")
-	public void sampleButton() {
-		JOptionPane.showMessageDialog(null, "You Pressed the 'GO' button.");
+	@Override
+	public void postRound() {
+		HashSet<Integer> consensus = null;
+		HashSet<Integer> initialValues = new HashSet<Integer>();
+		for (MobileHost mh : MobileHost.allMHs) {
+			initialValues.add(mh.initialValue);
+			if (mh.consensus == null) {
+				return; // consensus not reached
+			}
+			if (consensus == null) {
+				consensus = mh.consensus;
+			} else if (!consensus.equals(mh.consensus)) {
+				Tools.fatalError("Some local consensus is different from global consensus");
+			}
+		}
+		if (consensus != null) {
+			for (Integer consensusValue : consensus) {
+				if (!initialValues.contains(consensusValue)) {
+					Tools.fatalError("Some value from consensus was not proposed by anyone");
+				}
+			}
+		}
 	}
+
 }

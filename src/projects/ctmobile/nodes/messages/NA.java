@@ -1,5 +1,6 @@
 package projects.ctmobile.nodes.messages;
 
+import projects.ctmobile.nodes.nodeImplementations.MobileSupportStation;
 import sinalgo.nodes.messages.Message;
 
 /**
@@ -7,21 +8,21 @@ import sinalgo.nodes.messages.Message;
  */
 public class NA extends Message {
 
-	public int mss_j;
-	public int r_j;
+	public MobileSupportStation mss;
+	public int r;
 	
-	public NA(int mss_j, int r_j) {
-		this.mss_j = mss_j;
-		this.r_j = r_j;
+	public NA(MobileSupportStation mss, int r) {
+		this.mss = mss;
+		this.r = r;
 	}
 	
 	@Override
 	public Message clone() {
-		return new NA(mss_j, r_j);
+		return new NA(mss, r);
 	}
 
 	@Override
 	public String toString() {
-		return "NA(" + mss_j + ", " + r_j + ")";
+		return "NA(" + mss + ", " + r + ")";
 	}
 }

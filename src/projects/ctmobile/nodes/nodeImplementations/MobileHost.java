@@ -2,6 +2,7 @@ package projects.ctmobile.nodes.nodeImplementations;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Vector;
 
@@ -11,19 +12,15 @@ import projects.ctmobile.nodes.messages.Guest;
 import projects.ctmobile.nodes.messages.Init1;
 import projects.ctmobile.nodes.messages.Init3;
 import projects.ctmobile.nodes.messages.Propose;
-import projects.defaultProject.nodes.timers.MessageTimer;
-import projects.sample1.nodes.messages.S1Message;
 import sinalgo.configuration.Configuration;
 import sinalgo.configuration.CorruptConfigurationEntryException;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
-import sinalgo.nodes.Node.NodePopupMethod;
 import sinalgo.nodes.edges.Edge;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 import sinalgo.runtime.Main;
-import sinalgo.tools.Tools;
 import sinalgo.tools.logging.Logging;
 import sinalgo.tools.statistics.Distribution;
 
@@ -34,7 +31,7 @@ public class MobileHost extends Node {
 	 */
 	
 	// all mobile host nodes
-	private static Vector<MobileHost> allMHs = new Vector<MobileHost>();
+	public static Vector<MobileHost> allMHs = new Vector<MobileHost>();
 	
 	// random number generator from the framework
 	private static Random random = Distribution.getRandom();
@@ -72,7 +69,10 @@ public class MobileHost extends Node {
 	private MobileSupportStation mss;
 	
 	// Value provided by the application program running on a mobile host
-	private int initialValue;
+	public int initialValue = -1;
+	
+	// consensus value
+	public HashSet<Integer> consensus;
 	
 	private Logging logger = Logging.getLogger("ctmobile.log");
 	
@@ -95,6 +95,7 @@ public class MobileHost extends Node {
 			} else if (msg instanceof Decide) {
 				// Action 3
 				loggedAppStateChange(ApplicationState.ReachedConsensus);
+				consensus = ((Decide)msg).v;
 			}
 		}
 	}
@@ -117,7 +118,6 @@ public class MobileHost extends Node {
 	public void preStep() {
 		// application may randomly request consensus to start
 		if (appState == ApplicationState.Idle && random.nextDouble() < pStart) {
-			initialValue = random.nextInt(maxValue);
 			loggedAppStateChange(ApplicationState.RequestingConsensus);
 		}
 	}
@@ -147,6 +147,8 @@ public class MobileHost extends Node {
 	public void init() {
 		allMHs.add(this);
 		appState = ApplicationState.Idle;
+		initialValue = random.nextInt(maxValue);
+		consensus = null;
 	}
 
 	@Override
@@ -169,15 +171,15 @@ public class MobileHost extends Node {
 			// Hand-off procedure (1)
 			loggedSend(new Guest(this, mss), someMSS);
 			logger.logln(LogL.HANDOFF, this + " now talks to " + someMSS);
-			mss = someMSS;
 		}
+		// Update MSS
+		mss = someMSS;
 	}
 	
 	@Override
 	public void postStep() {
-		// Messages are reliably sent to MSS here
+		// Action 1
 		if (appState == ApplicationState.RequestingConsensus && mss != null) {
-			// Action 1
 			loggedSend(new Init1(), mss);
 			loggedAppStateChange(ApplicationState.AwaitingConsensus);
 		}
